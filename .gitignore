@@ -1,0 +1,11 @@
+# rendered output — everything under src/*.in is generated into ~/.local
+*.swp
+*~
+.DS_Store
+
+# local scratch
+/scratch/
+*.log
+
+# the script writes here during gdm work
+/.gdm-backup/

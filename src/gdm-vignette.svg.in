@@ -1,0 +1,26 @@
+<!-- PTAI @NAME@ — greeter vignette. Scaled to cover the screen by gdm.css.
+     Corner falloff, a faint phosphor wash, and a soft bloom behind the prompt.
+     One actor gets one background-image in St, so all three live in here. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080"
+     viewBox="0 0 1920 1080" preserveAspectRatio="none">
+  <defs>
+    <radialGradient id="vig" cx="50%" cy="46%" r="76%">
+      <stop offset="0%"   stop-color="#000000" stop-opacity="0"></stop>
+      <stop offset="58%"  stop-color="#000000" stop-opacity="0.16"></stop>
+      <stop offset="82%"  stop-color="#000000" stop-opacity="0.52"></stop>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.86"></stop>
+    </radialGradient>
+    <radialGradient id="bloom" cx="50%" cy="47%" r="42%">
+      <stop offset="0%"   stop-color="@FG@" stop-opacity="0.10"></stop>
+      <stop offset="55%"  stop-color="@FG@" stop-opacity="0.04"></stop>
+      <stop offset="100%" stop-color="@FG@" stop-opacity="0"></stop>
+    </radialGradient>
+    <linearGradient id="wash" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="@FG@" stop-opacity="0.05"></stop>
+      <stop offset="100%" stop-color="@FG@" stop-opacity="0.01"></stop>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#wash)"></rect>
+  <rect width="1920" height="1080" fill="url(#bloom)"></rect>
+  <rect width="1920" height="1080" fill="url(#vig)"></rect>
+</svg>

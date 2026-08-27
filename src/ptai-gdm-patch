@@ -1,0 +1,150 @@
+#!/usr/bin/env bash
+# ptai-gdm-patch — rebuild GNOME Shell's theme gresource with PTAI greeter CSS.
+# Installed to /usr/libexec/ptai-gdm-patch. Runs as root, idempotent, and safe
+# to re-run after a gnome-shell update (always patches from the pristine copy).
+set -euo pipefail
+
+RES="/usr/share/gnome-shell/gnome-shell-theme.gresource"   # replaced by find_theme_gresource
+DATA="/usr/share/ptai-theme"
+PRISTINE="$DATA/gnome-shell-theme.gresource.orig"
+STAMP="$DATA/gnome-shell-theme.gresource.stamp"
+CSS="$DATA/gdm.css"
+SCANLINE="$DATA/scanline.svg"
+PREFIX="/org/gnome/shell/theme"   # overridden below from the bundle itself
+
+log() { printf '[ptai-gdm] %s\n' "$*"; }
+die() { printf '[ptai-gdm] %s\n' "$*" >&2; exit 1; }
+trap 'rc=$?; [ "$rc" -ne 0 ] && printf "[ptai-gdm] aborted at line %s (exit %s)\n" "$LINENO" "$rc" >&2' ERR
+
+[ "$(id -u)" -eq 0 ] || die "must run as root"
+# Locate the bundle that actually carries the shell stylesheets. GNOME has
+# moved this between releases, so search rather than assume a filename.
+find_theme_gresource() {
+  local f out
+  for f in /usr/share/gnome-shell/gnome-shell-theme.gresource \
+           /usr/share/gnome-shell/*.gresource \
+           /usr/lib64/gnome-shell/*.gresource \
+           /usr/lib/gnome-shell/*.gresource \
+           /usr/share/gdm/*.gresource; do
+    [ -f "$f" ] || continue
+    out="$(gresource list "$f" 2>/dev/null || true)"
+    case "$out" in
+      *.css*) printf '%s' "$f"; return 0 ;;
+    esac
+  done
+  return 1
+}
+
+if ! RES="$(find_theme_gresource)"; then
+  log "searched for a gresource containing stylesheets and found none:"
+  for f in /usr/share/gnome-shell/*.gresource /usr/lib64/gnome-shell/*.gresource; do
+    [ -f "$f" ] || continue
+    n=$(gresource list "$f" 2>/dev/null | wc -l || true)
+    c=$(gresource list "$f" 2>/dev/null | grep -c '\.css$' || true)
+    log "  $f -> $n resources, ${c:-0} css"
+  done
+  die "no patchable stylesheet bundle on this system"
+fi
+log "target bundle: $RES"
+PRISTINE="$DATA/$(basename "$RES").orig"
+STAMP="$DATA/$(basename "$RES").stamp"
+
+[ -f "$CSS" ] || die "no greeter CSS at $CSS — run ptai-theme install first"
+command -v gresource >/dev/null || die "gresource missing (dnf install glib2)"
+command -v glib-compile-resources >/dev/null || die "glib-compile-resources missing (dnf install glib2-devel)"
+
+case "${1:-patch}" in
+restore)
+  # restore whichever bundle we stamped
+  for orig in "$DATA"/*.gresource.orig; do
+    [ -f "$orig" ] || continue
+    base="$(basename "$orig" .orig)"
+    for cand in /usr/share/gnome-shell/"$base" /usr/lib64/gnome-shell/"$base" /usr/lib/gnome-shell/"$base"; do
+      [ -f "$cand" ] && { install -m 0644 "$orig" "$cand"; log "restored $cand"; }
+    done
+    rm -f "$DATA/$base.stamp"
+  done
+  exit 0
+  ;;
+patch) ;;
+*) die "usage: ptai-gdm-patch [patch|restore]" ;;
+esac
+
+mkdir -p "$DATA"
+
+# Is the file on disk one we made? If the stamp matches, $RES is ours and the
+# pristine copy is still valid. If not, gnome-shell was updated (or this is the
+# first run) and the current file becomes the new pristine source.
+if [ ! -f "$STAMP" ] || ! sha256sum -c --status "$STAMP" 2>/dev/null; then
+  install -m 0644 "$RES" "$PRISTINE"
+  log "captured pristine gresource"
+fi
+
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+
+# The prefix is whatever the bundle actually uses, not an assumption.
+# Note: no `| head`, which would SIGPIPE the producer and abort under pipefail.
+first_res="$(gresource list "$PRISTINE" | sed -n '1p')"
+PREFIX="${first_res%/*}"
+[ -n "$PREFIX" ] || die "could not determine resource prefix"
+log "resource prefix: $PREFIX"
+
+# unpack every resource out of the pristine bundle
+mapfile -t paths < <(gresource list "$PRISTINE")
+[ "${#paths[@]}" -gt 0 ] || die "pristine gresource lists no resources"
+
+# Resources can sit in subdirectories, and a few may live outside the common
+# prefix entirely — strip a leading slash rather than assume the prefix matches.
+for p in "${paths[@]}"; do
+  rel="${p#"$PREFIX/"}"
+  rel="${rel#/}"
+  mkdir -p "$tmp/$(dirname "$rel")"
+  gresource extract "$PRISTINE" "$p" > "$tmp/$rel" \
+    || die "failed to extract $p"
+done
+log "unpacked ${#paths[@]} resources"
+
+# our tiles, referenced by gdm.css as resource:///org/gnome/shell/theme/ptai-*.svg
+for asset in scanline vignette; do
+  for cand in "$DATA/gdm-$asset.svg" "$DATA/$asset.svg"; do
+    [ -f "$cand" ] || continue
+    cp -f "$cand" "$tmp/ptai-$asset.svg"
+    paths+=("$PREFIX/ptai-$asset.svg")
+    break
+  done
+done
+
+# append our overrides to every stylesheet in the bundle, at any depth
+patched=0
+while IFS= read -r -d '' css; do
+  printf '\n/* ---- PTAI greeter overrides ---- */\n' >> "$css"
+  cat "$CSS" >> "$css"
+  patched=$((patched + 1))
+  log "  + ${css#$tmp/}"
+done < <(find "$tmp" -name '*.css' -print0)
+[ "$patched" -gt 0 ] || die "no .css found inside the gresource — layout changed upstream"
+log "patched $patched stylesheet(s)"
+
+# regenerate the manifest from what we actually have
+{
+  printf '<?xml version="1.0" encoding="UTF-8"?>\n<gresources>\n'
+  printf '  <gresource prefix="%s">\n' "$PREFIX"
+  for p in "${paths[@]}"; do
+    rel="${p#"$PREFIX/"}"
+    rel="${rel#/}"
+    printf '    <file>%s</file>\n' "$rel"
+  done
+  printf '  </gresource>\n</gresources>\n'
+} > "$tmp/ptai.gresource.xml"
+
+glib-compile-resources \
+  --sourcedir="$tmp" \
+  --target="$tmp/out.gresource" \
+  "$tmp/ptai.gresource.xml" \
+  || die "gresource compile failed"
+
+install -m 0644 "$tmp/out.gresource" "$RES"
+( cd / && sha256sum "$RES" ) > "$STAMP"
+log "installed themed greeter → $RES"
+log "restart the greeter:  systemctl restart gdm   (ends your session)"

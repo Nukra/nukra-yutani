@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3840" height="2160" viewBox="0 0 3840 2160">
+  <defs>
+    <pattern id="grid" width="240" height="240" patternUnits="userSpaceOnUse">
+      <path d="M240 0 H0 V240" fill="none" stroke="@DIM@" stroke-width="2" opacity="0.22"/>
+    </pattern>
+    <pattern id="scan" width="8" height="8" patternUnits="userSpaceOnUse">
+      <rect x="0" y="0" width="8" height="4" fill="#000000" opacity="0"/>
+      <rect x="0" y="4" width="8" height="4" fill="#000000" opacity="0.34"/>
+    </pattern>
+    <radialGradient id="vig" cx="50%" cy="50%" r="72%">
+      <stop offset="38%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="82%" stop-color="#000000" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.96"/>
+    </radialGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="26" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="3840" height="2160" fill="@BG@"/>
+  <rect width="3840" height="2160" fill="url(#grid)"/>
+
+  <g filter="url(#glow)" transform="translate(1920,880)">
+    <path d="M-198,-200 h132 v200 l-82,124 v-200 z" fill="@FG@"/>
+    <path d="M-50,-64 h100 v264 l-100,-124 z" fill="@FG@" transform="translate(0,-72)"/>
+    <path d="M66,-200 h132 v124 l-132,200 v-200 z" fill="@FG@"/>
+  </g>
+
+  <text x="1920" y="1240" text-anchor="middle" font-family="Silkscreen, monospace"
+        font-size="112" letter-spacing="46" fill="@HOT@" filter="url(#glow)">@ORG@</text>
+  <text x="1920" y="1348" text-anchor="middle" font-family="Share Tech Mono, monospace"
+        font-size="52" letter-spacing="16" fill="@DIM@">BUILDING BETTER WORLDS</text>
+
+  <text x="112" y="132" font-family="Share Tech Mono, monospace" font-size="44" fill="@DIM@">NODE: PTAI-07</text>
+  <text x="112" y="196" font-family="Share Tech Mono, monospace" font-size="44" fill="@DIM@">SECTOR: 4.119.882</text>
+  <text x="3728" y="2020" text-anchor="end" font-family="Share Tech Mono, monospace" font-size="44" fill="@DIM@">REV 3.1 / @NAME@</text>
+  <text x="3728" y="2084" text-anchor="end" font-family="Share Tech Mono, monospace" font-size="44" fill="@DIM@">SM-LINK DATA SYSTEMS</text>
+
+  <rect width="3840" height="2160" fill="url(#scan)"/>
+  <rect width="3840" height="2160" fill="url(#vig)"/>
+</svg>

@@ -1,0 +1,60 @@
+#!/usr/bin/perl
+# ptai-type — stream stdin to stdout one character at a time, CRT-terminal style.
+# Installed to ~/.local/share/ptai-theme/ptai-type and used by ptai.sh.
+#
+#   PTAI_TYPE_DELAY   seconds per character (default 0.0022)
+#   PTAI_TYPE_BUDGET  seconds of typing per command before it dumps the rest
+#                     instantly (default 2.5). Keeps `cat bigfile` usable.
+#   PTAI_TYPE_JITTER  0..1 random variation in per-char delay (default 0.6)
+#
+# Ctrl-C during a reveal skips to the end of the output instead of killing the
+# pipeline, matching the banner's behaviour.
+
+use strict;
+use warnings;
+use Time::HiRes qw(time sleep);
+
+my $delay  = $ENV{PTAI_TYPE_DELAY}  // 0.0022;
+my $budget = $ENV{PTAI_TYPE_BUDGET} // 2.5;
+my $jitter = $ENV{PTAI_TYPE_JITTER} // 0.6;
+$delay  = 0 if $delay  !~ /^[\d.]+$/;
+$budget = 0 if $budget !~ /^[\d.]+$/;
+$jitter = 0 if $jitter !~ /^[\d.]+$/ || $jitter > 1;
+
+$| = 1;
+binmode STDIN;
+binmode STDOUT;
+
+my $fast = ($delay <= 0);
+$SIG{INT} = sub { $fast = 1 };
+
+my $spent = 0;
+my $started = time;
+
+while (defined(my $line = <STDIN>)) {
+  if ($fast) { print $line; next; }
+
+  # Escape sequences (colour, cursor moves) emit whole and cost nothing — a
+  # colourised line should reveal its text, not its control codes.
+  while ($line =~ /\G(\e\[[0-9;?]*[a-zA-Z]|\e\][^\a\e]*(?:\a|\e\\)|\e.|.)/gs) {
+    my $tok = $1;
+    print $tok;
+    next if length($tok) > 1;          # escape sequence
+    next if $tok =~ /^[\s]$/ && $tok ne ' ';  # newlines/tabs are free
+
+    my $d = $delay;
+    $d *= (1 - $jitter / 2 + rand($jitter)) if $jitter > 0;
+    sleep $d;
+    $spent += $d;
+
+    if ($budget > 0 && (time - $started) > $budget) {
+      $fast = 1;                       # over budget: flush the remainder
+      last;
+    }
+  }
+  if ($fast) {
+    # finish the current line, then the rest of the stream, at full speed.
+    my $rest = substr($line, pos($line) // 0);
+    print $rest if defined $rest && length $rest;
+  }
+}

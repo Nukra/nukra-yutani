@@ -1,0 +1,239 @@
+/* PTAI @NAME@ — GDM greeter overrides. Appended into the shell theme gresource
+   by ptai-gdm-patch. Must be self-contained: no @import, no external paths. */
+
+/* ---- greeter surface ----
+   Three layers, because an St actor gets exactly one background-image:
+     background actor  — the wallpaper, set through gdm dconf (below all of this)
+     #lockDialogGroup  — scanline tile, tiled 1:1
+     .login-dialog     — vignette + phosphor wash + bloom, scaled to cover
+   Note the deliberately transparent background-color: a solid colour here
+   would paint straight over the wallpaper actor underneath. */
+#lockDialogGroup {
+  background-color: rgba(0,0,0,0.42);
+  background-image: url("resource:///org/gnome/shell/theme/ptai-scanline.svg");
+  background-repeat: repeat;
+}
+.login-dialog, .unlock-dialog {
+  background-color: transparent;
+  background-image: url("resource:///org/gnome/shell/theme/ptai-vignette.svg");
+  background-size: cover;
+  color: @FG@;
+  font-family: "Share Tech Mono", monospace;
+}
+
+/* ---- top bar on the greeter ---- */
+#panel {
+  background-color: rgba(0,0,0,0.86);
+  border-bottom: 1px solid @DIM@;
+  height: 30px;
+}
+#panel .panel-button {
+  color: @FG@;
+  border-radius: 0;
+  font-family: "Share Tech Mono", monospace;
+  text-shadow: 0 0 6px @GLOW@;
+}
+#panel .panel-button StIcon { color: @FG@; icon-shadow: 0 0 6px @GLOW@; }
+#panel .panel-button:hover, #panel .panel-button:active,
+#panel .panel-button:focus, #panel .panel-button:checked {
+  background-color: @FG@; color: @BG@; border-radius: 0; box-shadow: none;
+}
+#panel .panel-button:hover StIcon, #panel .panel-button:checked StIcon { color: @BG@; }
+#panel .clock-display .clock { color: @HOT@; letter-spacing: 0.08em; }
+
+/* ---- banner ---- */
+.login-dialog-banner-view { padding-bottom: 26px; }
+.login-dialog .login-dialog-banner,
+.login-dialog-banner {
+  color: @FG@;
+  font-family: "Share Tech Mono", monospace;
+  font-size: 11pt;
+  line-height: 1.7em;
+  letter-spacing: 0.14em;
+  text-align: center;
+  text-shadow: 0 0 10px @GLOW@;
+  padding: 0 24px;
+  max-width: 900px;
+}
+
+/* ---- one frame only ----
+   GNOME 50 nests the prompt layout inside the user-list view, so framing both
+   gives the double box. The outer box is the frame; the inner one is bare. */
+.login-dialog-user-selection-box,
+.login-dialog-auth-list-view {
+  border: 1px solid @DIM@;
+  background-color: rgba(0,0,0,0.55);
+  padding: 26px 30px;
+}
+.login-dialog-prompt-layout {
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  spacing: 12px;
+}
+.login-dialog-prompt-label {
+  color: @HOT@;
+  font-family: "Silkscreen", "Share Tech Mono", monospace;
+  font-size: 10pt;
+  letter-spacing: 0.22em;
+  text-shadow: 0 0 8px @GLOW@;
+  padding-bottom: 6px;
+}
+/* ---- entry ----
+   GNOME 50 paints entries and their icons from the session accent colour, which
+   is why an unstyled greeter entry comes up mauve. Every accent-fed property is
+   restated here, and the accent itself is pinned to blue in the gdm dconf keys. */
+.login-dialog-prompt-entry,
+.login-dialog-prompt-entry:focus,
+.login-dialog-prompt-entry:hover,
+.login-dialog StEntry,
+.login-dialog StEntry:focus,
+.login-dialog StEntry:hover,
+StEntry {
+  background-color: rgba(0,0,0,0.55);
+  background-gradient-start: transparent;
+  background-gradient-end: transparent;
+  border: none;
+  border-bottom: 1px solid @DIM@;
+  border-radius: 0;
+  box-shadow: none;
+  color: @FG@;
+  caret-color: @HOT@;
+  caret-size: 8px;
+  selection-background-color: @DIM@;
+  selected-color: @HOT@;
+  font-family: "VT323", "Share Tech Mono", monospace;
+  font-size: 17pt;
+  padding: 6px 10px;
+  min-width: 300px;
+}
+.login-dialog StEntry:focus, StEntry:focus {
+  border-bottom: 1px solid @FG@;
+  box-shadow: none;
+}
+.login-dialog StEntry StLabel.hint-text, StEntry StLabel.hint-text { color: @DIM@; }
+/* the reveal-password and go-back icons ride the accent colour too */
+.login-dialog StEntry StIcon, .login-dialog StEntry .popup-menu-arrow { color: @DIM@; }
+.login-dialog StEntry StIcon:hover { color: @FG@; }
+.login-dialog .icon-button, .login-dialog StButton#vhandle,
+.login-dialog-button.cancel-button, .login-dialog .cancel-button {
+  background-color: transparent;
+  background-gradient-start: transparent;
+  background-gradient-end: transparent;
+  border: 1px solid @DIM@;
+  border-radius: 0;
+  color: @DIM@;
+  box-shadow: none;
+}
+.login-dialog .icon-button:hover, .login-dialog .cancel-button:hover {
+  background-color: @DIM@; color: @HOT@;
+}
+StEntry StIcon.capslock-warning, .capslock-warning { color: @HOT@; }
+.login-dialog-message-warning, .login-dialog-message { color: @HOT@; letter-spacing: 0.1em; }
+.login-dialog-message-hint { color: @DIM@; }
+.login-dialog-timed-login-indicator { background-color: @FG@; }
+
+/* ---- user list ---- */
+.login-dialog-user-list-view { -st-vfade-offset: 0; }
+.login-dialog-user-list { spacing: 6px; color: @FG@; }
+.login-dialog-user-list-item {
+  border-radius: 0;
+  border: none;
+  color: @FG@;
+  padding: 8px 14px;
+  text-shadow: 0 0 6px @GLOW@;
+}
+.login-dialog-user-list-item:hover,
+.login-dialog-user-list-item:focus,
+.login-dialog-user-list:expanded .login-dialog-user-list-item:selected {
+  background-color: @FG@;
+  color: @BG@;
+  text-shadow: none;
+}
+.login-dialog-user-list-item:hover .login-dialog-username,
+.login-dialog-user-list-item:focus .login-dialog-username { color: @BG@; }
+.login-dialog-username, .user-widget-label {
+  color: @FG@;
+  font-family: "Silkscreen", "Share Tech Mono", monospace;
+  font-size: 11pt;
+  letter-spacing: 0.24em;
+  text-shadow: 0 0 8px @GLOW@;
+  padding: 0 0 14px 0;
+}
+/* ---- avatar ----
+   AccountsService generates a coloured initial-circle when the user has no
+   picture. It cannot be recoloured from CSS and a lime disc has no place on a
+   terminal login, so it is collapsed away and the username carries the identity. */
+.login-dialog-user-widget .user-icon,
+.login-dialog-user-list-item .user-widget .user-icon,
+.login-dialog-user-widget StIcon,
+.user-icon {
+  width: 0;
+  height: 0;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background-color: transparent;
+  background-image: none;
+  background-size: 0 0;
+  icon-size: 0;
+}
+.login-dialog-not-listed-label, .login-dialog-not-listed-button {
+  color: @DIM@;
+  font-family: "Share Tech Mono", monospace;
+  letter-spacing: 0.2em;
+  border-radius: 0;
+}
+.login-dialog-not-listed-button:focus .login-dialog-not-listed-label,
+.login-dialog-not-listed-button:hover .login-dialog-not-listed-label { color: @HOT@; }
+
+/* ---- buttons: text-only until touched, so they do not compete with the prompt ---- */
+.login-dialog .modal-dialog-button-box { spacing: 10px; }
+.login-dialog .button, .modal-dialog-linked-button, .login-dialog-button {
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+  color: @DIM@;
+  font-family: "Silkscreen", "Share Tech Mono", monospace;
+  font-size: 9pt;
+  letter-spacing: 0.18em;
+  padding: 8px 14px;
+}
+.login-dialog .button:hover, .login-dialog .button:focus,
+.modal-dialog-linked-button:hover, .modal-dialog-linked-button:focus {
+  background-color: transparent; color: @FG@; border: none;
+  text-shadow: 0 0 8px @GLOW@;
+}
+.login-dialog .button:default { color: @FG@; }
+
+/* ---- session / auth chooser popups ---- */
+.popup-menu-content, .popup-menu-boxpointer, .candidate-popup-content {
+  background-color: rgba(0,0,0,0.94);
+  border: 1px solid @DIM@;
+  border-radius: 0;
+  box-shadow: none;
+}
+.popup-menu-item { border-radius: 0; color: @FG@; }
+.popup-menu-item:hover, .popup-menu-item:focus, .popup-menu-item.selected {
+  background-color: @FG@; color: @BG@;
+}
+.popup-menu-item:checked { background-color: @DIM@; color: @HOT@; }
+
+/* ---- shutdown / restart dialogs on the greeter ---- */
+.end-session-dialog, .modal-dialog, .headline {
+  background-color: rgba(0,0,0,0.95);
+  border: 1px solid @DIM@;
+  border-radius: 0;
+  color: @FG@;
+  font-family: "Share Tech Mono", monospace;
+}
+.end-session-dialog-subject { color: @HOT@; letter-spacing: 0.14em; }
+.end-session-dialog-description { color: @FG@; }
+
+/* ---- vignette: keeps the tube feel without the extension, which GDM never loads ---- */
+.screen-shield-background, #screenShieldGroup { background-color: @BG@; }
+
+/* Nothing here animates: the greeter loads no extensions, so the sweep and
+   flicker from the CRT overlay have no equivalent. */

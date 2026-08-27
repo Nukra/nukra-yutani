@@ -1,0 +1,49 @@
+name: Bug report
+description: Something in the theme is not applying or looks wrong
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Run `./ptai-theme doctor` first — it checks all ten links in the chain
+        and names the broken one. If it points at the User Themes extension,
+        that is the fix, not a bug here.
+  - type: input
+    id: preset
+    attributes:
+      label: Preset
+      placeholder: green
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Fedora and GNOME version
+      placeholder: Fedora 44, GNOME 48, Wayland
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of ./ptai-theme doctor
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: status
+    attributes:
+      label: Output of ./ptai-theme status
+      render: text
+  - type: textarea
+    id: what
+    attributes:
+      label: What you expected, and what you got
+      description: Which part of the system — shell, GTK apps, icons, terminal, greeter?
+    validations:
+      required: true
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Does it happen in other presets
+      options:
+        - label: I tried at least one other preset, including paper

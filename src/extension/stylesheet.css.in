@@ -1,0 +1,248 @@
+/* PTAI @NAME@ — extension stylesheet.
+   The gauge classes live here as well as in the shell theme: GNOME loads this
+   file for the extension's own actors regardless of which shell theme is
+   active, so the panel furniture survives User Themes being off or a stock
+   Adwaita session. */
+
+.ptai-gauge {
+  border-left: 1px solid @DIM@;
+  -natural-hpadding: 10px;
+  -minimum-hpadding: 8px;
+}
+
+/* wordmark must not ellipsize — St shrinks the label before the gauges, so the
+   org text needs its own floor */
+.ptai-wordmark-org {
+  min-width: 128px;
+}
+
+.ptai-gauge-box {
+  spacing: 6px;
+}
+
+.ptai-gauge-label {
+  font-family: 'Silkscreen', 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  padding-right: 6px;
+  color: @DIM@;
+}
+
+.ptai-gauge-value {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  color: @FG@;
+}
+
+.ptai-gauge-spark {
+  width: 42px;
+  height: 22px;
+  padding-left: 6px;
+  color: @FG@;
+}
+
+.ptai-gauge:hover .ptai-gauge-label,
+.ptai-gauge:checked .ptai-gauge-label,
+.ptai-gauge:hover .ptai-gauge-value,
+.ptai-gauge:checked .ptai-gauge-value,
+.ptai-gauge:hover .ptai-gauge-spark,
+.ptai-gauge:checked .ptai-gauge-spark {
+  color: @BG@;
+}
+
+.ptai-gauge:hover,
+.ptai-gauge:checked {
+  background-color: @FG@;
+}
+
+.ptai-detail-row {
+  spacing: 24px;
+  min-width: 260px;
+}
+
+.ptai-detail-key {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: @DIM@;
+}
+
+.ptai-detail-val {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  color: @HOT@;
+}
+
+.ptai-wordmark,
+.ptai-readout {
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 0.18em;
+}
+
+.ptai-wordmark {
+  padding: 0 12px 0 10px;
+  spacing: 8px;
+  border-right: 1px solid @DIM@;
+}
+
+/* org and sub must not run together — without these the bar reads
+   "HELIOS-YUTANIPTAI" as one word */
+.ptai-wordmark-org {
+  font-family: 'Silkscreen', 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  padding-right: 8px;
+  color: @FG@;
+}
+
+.ptai-wordmark-sub {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  padding: 1px 5px;
+  color: @BG@;
+  background-color: @FG@;
+}
+
+.ptai-readout-box {
+  padding: 0 10px;
+  border-left: 1px solid @DIM@;
+}
+
+.ptai-wordmark { color: @FG@; }
+.ptai-readout { color: @DIM@; }
+.ptai-hazard { color: @DIM@; }
+
+/* ---------------------------------------------------------------------------
+   Shell-wide fallbacks.
+
+   An extension's stylesheet is added to the shell's theme context, so these
+   apply to every actor, not just ours. Duplicating the highest-visibility rules
+   here means the desktop still reads as PTAI when the User Themes extension is
+   missing or disabled — the failure mode where the panel looks correct and
+   everything else stays stock grey.
+   --------------------------------------------------------------------------- */
+
+/* accent-driven widgets: toggles, sliders, checks, selection */
+stage {
+  -st-accent-color: @FG@;
+  -st-accent-fg-color: @BG@;
+}
+
+.quick-toggle, .quick-slider, .quick-menu-toggle, .quick-settings-system-item,
+.quick-toggle-button, .quick-settings-subtitle-container,
+.quick-menu-toggle .quick-toggle, .quick-menu-toggle .quick-toggle-arrow,
+.quick-toggle > StBoxLayout, .quick-menu-toggle > StBoxLayout {
+  border-radius: 0 !important;
+}
+
+.quick-toggle, .quick-slider, .quick-settings-system-item, .quick-toggle-button,
+.quick-menu-toggle .quick-toggle, .quick-menu-toggle .quick-toggle-arrow {
+  background-color: rgba(0,0,0,0.6) !important;
+  border: 1px solid @DIM@;
+  color: @FG@;
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 0.06em;
+}
+
+.quick-menu-toggle .quick-toggle { border-right-width: 0; }
+
+.quick-toggle:hover, .quick-toggle-button:hover, .quick-slider:hover,
+.quick-settings-system-item:hover, .quick-menu-toggle .quick-toggle:hover,
+.quick-menu-toggle .quick-toggle-arrow:hover {
+  background-color: @DIM@ !important;
+  border-color: @FG@;
+  color: @HOT@;
+}
+
+.quick-toggle:checked, .quick-toggle-button:checked,
+.quick-menu-toggle .quick-toggle:checked,
+.quick-menu-toggle .quick-toggle-arrow:checked,
+.quick-toggle:active, .quick-toggle-button:active {
+  background-color: @FG@ !important;
+  border-color: @FG@;
+  color: @BG@ !important;
+}
+
+.quick-toggle:checked StIcon, .quick-toggle-button:checked StIcon,
+.quick-menu-toggle .quick-toggle:checked StIcon,
+.quick-menu-toggle .quick-toggle-arrow:checked StIcon,
+.quick-toggle:checked StLabel, .quick-menu-toggle .quick-toggle:checked StLabel {
+  color: @BG@ !important;
+}
+
+.quick-toggle .subtitle, .quick-menu-toggle .subtitle {
+  color: @DIM@;
+  font-size: 0.85em;
+  letter-spacing: 0.1em;
+}
+.quick-toggle:checked .subtitle,
+.quick-menu-toggle .quick-toggle:checked .subtitle { color: @BG@ !important; }
+
+.popup-menu-content, .quick-settings, .aggregate-menu .popup-menu-content {
+  background-color: rgba(0,0,0,0.94) !important;
+  border: 1px solid @DIM@;
+  border-radius: 0 !important;
+}
+
+.slider { color: @FG@; -slider-background-color: rgba(0,0,0,0.6); }
+
+/* overview: search, dash, app grid, folders, workspaces */
+.search-entry {
+  background-color: rgba(0,0,0,0.7) !important;
+  border: 1px solid @FG@;
+  border-radius: 0 !important;
+  color: @FG@;
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 0.12em;
+}
+.search-entry:focus { border-color: @HOT@; box-shadow: none; }
+.search-entry StIcon { color: @DIM@; }
+
+#dash, .dash-background {
+  background-color: rgba(0,0,0,0.82) !important;
+  border: 1px solid @DIM@;
+  border-radius: 0 !important;
+}
+
+.overview-tile, .app-well-app .overview-icon, .show-apps .overview-icon,
+.app-folder, .app-folder .overview-icon {
+  border-radius: 0 !important;
+  color: @FG@;
+}
+.overview-tile:hover, .overview-tile:focus, .overview-tile:selected,
+.app-well-app:hover .overview-icon {
+  background-color: @DIM@ !important;
+  color: @HOT@;
+}
+
+.app-folder-dialog, .app-folder-dialog-container {
+  background-color: rgba(0,0,0,0.94) !important;
+  border: 1px solid @DIM@;
+  border-radius: 0 !important;
+}
+
+/* the folder tile itself (the grey rounded box holding member icons) */
+.app-folder, .app-folder .overview-icon, .app-folder-icon {
+  background-color: rgba(0,0,0,0.55) !important;
+  border: 1px solid @DIM@;
+  border-radius: 0 !important;
+}
+.app-folder:hover, .app-folder:hover .overview-icon {
+  background-color: @DIM@ !important;
+  border-color: @FG@;
+}
+
+.workspace-thumbnail, .workspace-thumbnails .workspace-thumbnail,
+.window-clone-border, .window-caption {
+  border: 1px solid @DIM@;
+  border-radius: 0 !important;
+}
+.workspace-thumbnails .active { border-color: @FG@; }
+.window-caption {
+  background-color: rgba(0,0,0,0.9) !important;
+  color: @FG@;
+  font-family: 'Share Tech Mono', monospace;
+}
+.page-indicator-icon { background-color: @DIM@; }

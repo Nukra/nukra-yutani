@@ -1,0 +1,42 @@
+name: Preset submission
+description: Propose a new colour preset
+labels: [preset]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        See the colour rules in [CONTRIBUTING.md](../blob/main/CONTRIBUTING.md).
+        Two floors apply to every `ROLE_*` colour: 4.5:1 against `BG`, and
+        separation from `FG` by luminance or at least 25 degrees of hue.
+  - type: input
+    id: name
+    attributes:
+      label: Preset name
+      placeholder: mint — cold green phosphor
+    validations:
+      required: true
+  - type: textarea
+    id: conf
+    attributes:
+      label: The .conf file
+      description: Paste the whole thing, including the A0-A15 ramp and all eight ROLE_* tokens
+      render: ini
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: Every ROLE_* clears 4.5:1 against BG
+          required: true
+        - label: Every ROLE_* separates from FG by luminance or 25 degrees of hue
+          required: true
+        - label: I checked a mixed `ls`, the panel gauges and quick settings
+          required: true
+        - label: LIGHT=1 is set if this is a light preset
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: What it is meant to evoke, and anything that needed compromise

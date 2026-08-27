@@ -1,0 +1,198 @@
+/* PTAI @NAME@ — GTK override. Installed only with: ptai-theme install --gtk */
+@define-color window_bg_color @BG@;
+@define-color window_fg_color @FG@;
+@define-color view_bg_color @BG@;
+@define-color view_fg_color @FG@;
+@define-color headerbar_bg_color rgba(0,0,0,0.85);
+@define-color headerbar_fg_color @FG@;
+@define-color headerbar_border_color @DIM@;
+@define-color headerbar_backdrop_color @BG@;
+@define-color popover_bg_color #000000;
+@define-color popover_fg_color @FG@;
+@define-color sidebar_bg_color @BG@;
+@define-color sidebar_fg_color @FG@;
+@define-color sidebar_border_color @DIM@;
+@define-color card_bg_color rgba(0,0,0,0.55);
+@define-color card_fg_color @FG@;
+@define-color dialog_bg_color @BG@;
+@define-color dialog_fg_color @FG@;
+@define-color accent_bg_color @FG@;
+@define-color accent_fg_color @BG@;
+@define-color accent_color @FG@;
+@define-color destructive_bg_color @DIM@;
+@define-color destructive_color @HOT@;
+@define-color success_color @FG@;
+@define-color warning_color @HOT@;
+@define-color error_color @HOT@;
+@define-color borders @DIM@;
+
+* {
+  font-family: "Share Tech Mono", monospace;
+  border-radius: 0;
+  outline-color: @FG@;
+}
+label, entry, button label, headerbar .title, textview text {
+  text-shadow: 0 0 6px @GLOW@;
+}
+/* inverted states: no glow on dark-on-bright */
+button:active label, button:checked label, button.suggested-action label,
+row:selected label, .view:selected label, notebook > header tab:checked label {
+  text-shadow: none;
+}
+window, .background { background-color: @BG@; color: @FG@; }
+headerbar, .titlebar {
+  background-color: rgba(0,0,0,0.85);
+  color: @FG@;
+  border-bottom: 1px solid @DIM@;
+  box-shadow: none;
+}
+headerbar .title { letter-spacing: 0.12em; text-transform: uppercase; }
+button, entry, textview, spinbutton, combobox button {
+  background-image: none;
+  background-color: rgba(0,0,0,0.45);
+  border: 1px solid @DIM@;
+  color: @FG@;
+  box-shadow: none;
+}
+button:hover { background-color: @DIM@; color: @HOT@; border-color: @FG@; }
+button:active, button:checked { background-color: @FG@; color: @BG@; }
+button.suggested-action { background-color: @FG@; color: @BG@; border-color: @FG@; }
+entry:focus, entry:focus-within { border-color: @FG@; box-shadow: none; }
+entry { caret-color: @HOT@; }
+selection, ::selection { background-color: @FG@; color: @BG@; }
+popover > contents, popover.background > contents, menu, .menu {
+  background-color: #000000; border: 1px solid @DIM@; box-shadow: none; color: @FG@;
+}
+row:selected, .view:selected, list row:selected, treeview.view:selected {
+  background-color: @FG@; color: @BG@;
+}
+row:hover, list row:hover { background-color: @DIM@; color: @HOT@; }
+scrollbar { background-color: @BG@; border-color: @DIM@; }
+scrollbar slider { background-color: @DIM@; border-radius: 0; min-width: 8px; min-height: 8px; }
+scrollbar slider:hover { background-color: @FG@; }
+switch { background-color: rgba(0,0,0,0.5); border: 1px solid @DIM@; }
+switch:checked { background-color: @FG@; }
+switch slider { background-color: @DIM@; border-radius: 0; }
+switch:checked slider { background-color: @BG@; }
+progressbar progress, levelbar block.filled { background-color: @FG@; }
+notebook > header { background-color: @BG@; border-color: @DIM@; }
+notebook > header tab:checked { background-color: @FG@; color: @BG@; }
+separator { background-color: @DIM@; }
+tooltip, tooltip.background { background-color: #000000; border: 1px solid @DIM@; color: @FG@; }
+
+/* ── libadwaita shell: sidebars, preference groups, banners ─────────────── */
+.navigation-sidebar { background-color: rgba(0,0,0,0.35); }
+.navigation-sidebar row {
+  border: 1px solid transparent;
+  border-left: 2px solid transparent;
+  padding: 4px 8px;
+}
+.navigation-sidebar row:hover { border-left-color: @DIM@; background-color: @DIM@; color: @HOT@; }
+.navigation-sidebar row:selected {
+  background-color: @FG@; color: @BG@; border-left-color: @HOT@;
+}
+.navigation-sidebar row:selected image { color: @BG@; }
+.navigation-sidebar > separator { background-color: @DIM@; }
+.preferences-group > box > label.heading, .preferences-page .heading {
+  text-transform: uppercase; letter-spacing: 0.14em; color: @HOT@;
+}
+list.boxed-list, .card {
+  background-color: rgba(0,0,0,0.45);
+  border: 1px solid @DIM@;
+  border-radius: 0;
+}
+list.boxed-list > row { border-bottom: 1px solid @DIM@; }
+list.boxed-list > row:last-child { border-bottom: none; }
+row.activatable:hover { background-color: @DIM@; }
+/* secondary text sits on the floored meta role, not on @DIM@ — @DIM@ is a
+   hairline colour and never clears 4.5:1 against the background. */
+row > box > label.subtitle, label.dim-label, .dimmed { color: @ROLE_META@; opacity: 1; }
+banner > revealer > widget { background-color: @DIM@; color: @HOT@; }
+.osd, .toast, toast { background-color: #000000; border: 1px solid @FG@; color: @FG@; }
+statuspage image { color: @ROLE_META@; }
+
+/* switches read as hard-edged breakers, not pills */
+switch { min-width: 44px; min-height: 22px; padding: 1px; }
+switch > image { color: transparent; }
+switch:checked { background-color: @FG@; border-color: @FG@; }
+switch:checked slider { background-color: @BG@; }
+switch:disabled { border-color: @DIM@; }
+
+/* sliders: bar + block handle */
+scale trough { background-color: rgba(0,0,0,0.5); border: 1px solid @DIM@; min-height: 6px; }
+scale highlight { background-color: @FG@; border-radius: 0; }
+scale slider {
+  background-color: @HOT@;
+  border: 1px solid @BG@;
+  border-radius: 0;
+  min-width: 10px; min-height: 18px;
+  box-shadow: none;
+}
+scale value { color: @ROLE_META@; }
+checkbutton check, radio {
+  background-color: rgba(0,0,0,0.5);
+  border: 1px solid @DIM@;
+  border-radius: 0;
+  color: @HOT@;
+}
+check:checked, radio:checked { background-color: @FG@; color: @BG@; border-color: @FG@; }
+
+/* ── Files (Nautilus) ──────────────────────────────────────────────────── */
+.nautilus-window, .nautilus-window .background { background-color: @BG@; }
+.nautilus-window headerbar { border-bottom: 1px solid @DIM@; }
+.nautilus-window .nautilus-list-view, .nautilus-window columnview,
+.nautilus-window gridview { background-color: @BG@; color: @FG@; }
+.nautilus-window .navigation-sidebar { border-right: 1px solid @DIM@; }
+/* breadcrumb path bar → command-line segments */
+.nautilus-path-bar, .path-bar-box {
+  background-color: rgba(0,0,0,0.55);
+  border: 1px solid @DIM@;
+  padding: 0;
+}
+.nautilus-path-bar button, .path-bar-box button {
+  border: none;
+  border-right: 1px solid @DIM@;
+  background-color: transparent;
+  padding: 2px 10px;
+  letter-spacing: 0.08em;
+}
+.nautilus-path-bar button:last-child label,
+.path-bar-box button:last-child label { color: @HOT@; }
+.nautilus-path-bar button.current-dir label { color: @HOT@; }
+entry.search, .nautilus-search-entry { border: 1px solid @FG@; }
+columnview > header > button {
+  background-color: rgba(0,0,0,0.6);
+  border: none;
+  border-right: 1px solid @DIM@;
+  border-bottom: 1px solid @DIM@;
+  color: @ROLE_META@;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+columnview > header > button:hover { color: @HOT@; }
+columnview > listview > row:nth-child(even) { background-color: rgba(255,255,255,0.02); }
+columnview > listview > row > cell { border: none; }
+gridview child.activatable:hover, columnview row:hover { background-color: @DIM@; }
+gridview child:selected, columnview row:selected { background-color: @FG@; color: @BG@; }
+gridview child:selected label, columnview row:selected label { color: @BG@; text-shadow: none; }
+.nautilus-window .floating-bar {
+  background-color: #000000; border: 1px solid @DIM@; color: @ROLE_META@;
+}
+.nautilus-window paned > separator { background-color: @DIM@; }
+progressbar trough { background-color: rgba(0,0,0,0.5); border: 1px solid @DIM@; }
+progressbar progress { border-radius: 0; }
+
+/* ── Settings (gnome-control-center) ───────────────────────────────────── */
+window.control-center, .cc-panel-list { background-color: @BG@; }
+.cc-panel-list row, .cc-panel-list list row { border-left: 2px solid transparent; }
+.cc-panel-list row:selected { border-left-color: @HOT@; }
+.cc-panel-list row image, .navigation-sidebar row image { color: @HOT@; }
+.cc-panel-list row:selected image { color: @BG@; }
+.cc-panel-background, .cc-background-item { border: 1px solid @DIM@; border-radius: 0; }
+.keycap, keycap {
+  background-color: rgba(0,0,0,0.6); border: 1px solid @DIM@; color: @FG@;
+  border-radius: 0; box-shadow: none;
+}
+levelbar trough { background-color: rgba(0,0,0,0.5); border: 1px solid @DIM@; }
+levelbar block.filled { border: none; }
+levelbar block.empty { background-color: transparent; border: none; }

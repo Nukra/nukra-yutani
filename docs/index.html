@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PTAI — Weyland-Yutani terminal theme for Fedora</title>
+<meta name="description" content="A CRT terminal theme for Fedora Workstation: GNOME Shell, GDM greeter, Ptyxis palette, fonts, wallpaper and live scanline effects. Nine presets, one installer.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Micro+5&family=Azeret+Mono&family=Workbench&family=Kode+Mono&family=Saira+Stencil+One&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Jersey+10&family=Spline+Sans+Mono&family=Major+Mono+Display&family=Syne+Mono&family=Bungee&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Reddit+Mono&family=Zen+Dots&family=Anonymous+Pro&family=Martian+Mono&family=Syncopate&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nova+Mono&family=Chakra+Petch&family=Fragment+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil+Display&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+<style>
+  /* ---- candidate directions (section 03) ---- */
+  .cands { display: grid; grid-template-columns: repeat(auto-fit, minmax(432px, 1fr)); gap: 26px; }
+  @media (max-width: 700px) { .cands { grid-template-columns: 1fr; } }
+  .cand { border: 1px solid #1d1d1d; min-width: 0; }
+  .chead { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 13px 18px; background: #0d0f0d; border-bottom: 1px solid #1d1d1d; }
+  .chead .ck { font-family: 'Silkscreen', monospace; font-size: 10px; letter-spacing: .16em; padding: 4px 7px; border: 1px solid; }
+  .chead .cn { font-family: 'Silkscreen', monospace; font-size: 14px; letter-spacing: .14em; }
+  .chead .cw { margin-left: auto; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: #5f665f; }
+  .cdesc { margin: 0; padding: 15px 18px; font-size: 14px; line-height: 1.65; color: #808880; border-bottom: 1px solid #1d1d1d; text-wrap: pretty; }
+  .cspec { display: flex; flex-wrap: wrap; background: #1d1d1d; gap: 1px; border-bottom: 1px solid #1d1d1d; }
+  .cspec span { flex: 1 1 auto; background: var(--page); padding: 8px 12px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #6a716a; white-space: nowrap; }
+  .cramp { display: grid; grid-template-columns: repeat(4, 1fr); }
+  .cramp div { height: 24px; }
+  .croles { display: grid; grid-template-columns: repeat(8, 1fr); }
+  .croles div { height: 9px; }
+
+  .csurf { position: relative; overflow: hidden; padding: var(--p); display: flex; flex-direction: column; gap: var(--gap);
+           background: var(--cbg); font-family: var(--mf); font-size: var(--fs); line-height: var(--lh); }
+  .csurf::before { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 2;
+                   background: repeating-linear-gradient(to bottom, rgba(0,0,0,var(--scanA)) 0 1px, transparent 1px var(--scanP)); }
+  .csurf > * { position: relative; }
+  .csurf .dsp { font-family: var(--df); }
+
+  /* block skeleton — the archetypes below re-dress it */
+  .cblk { padding: var(--p); min-width: 0; }
+  .bh { display: block; font-family: var(--df); font-size: max(10px, calc(10px * var(--dscg, 1))); letter-spacing: .22em; color: var(--clab); margin-bottom: calc(var(--p) * .5); }
+  .cbar { display: flex; align-items: center; gap: 7px; padding: 7px 9px; white-space: nowrap; line-height: 1; overflow: hidden; }
+  .cbar > * { flex: 0 0 auto; }
+  .cbar .org { font-family: var(--df); font-size: calc(10px * var(--dscg, 1)); letter-spacing: .18em; color: var(--chot); text-shadow: 0 0 var(--gl) var(--glowc); }
+  .cbar .chip { font-size: 9px; letter-spacing: .14em; padding: 2px 5px; background: var(--cfg); color: var(--cbg); }
+  .cbar .clk { font-size: 10px; letter-spacing: .08em; color: var(--chot); }
+  .cbar .gg { margin-left: auto; display: flex; flex: 0 1 auto; min-width: 0; overflow: hidden; }
+  .cbar .ind { flex: none; font-size: 9px; letter-spacing: .1em; color: var(--cfg); }
+  .gu { display: flex; align-items: center; gap: 4px; padding: 0 6px; flex: none; border-left: 1px solid var(--cdimA); }
+  .gu .gl { font-family: var(--df); font-size: max(8px, calc(8px * var(--dscg, 1))); letter-spacing: .14em; color: var(--clab); }
+  .gu .gv { font-size: 10px; color: var(--cfg); }
+  .gu .gs { display: flex; align-items: flex-end; gap: 1px; height: 11px; }
+  .gu .gs i { width: 2px; display: block; background: var(--cfg); }
+
+  .cauth .u { font-family: var(--df); font-size: calc(14px * var(--dsc, 1)); letter-spacing: .2em; color: var(--cfg); text-shadow: 0 0 var(--gl) var(--glowc); }
+  .cauth .p { margin-top: 6px; font-size: 11px; letter-spacing: .18em; color: var(--chot); }
+  .cauth .e { margin-top: 5px; padding: 3px 2px; border-bottom: 1px solid var(--cdim); color: var(--cfg); letter-spacing: .3em; }
+  .cterm .q { color: var(--chot); }
+  .cterm .q b { font-weight: 400; color: var(--cfg); }
+  .cterm .o { color: var(--cfg); }
+  .cterm .m { color: var(--cdim); }
+  .cls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; margin-top: 4px; }
+  .cls span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .cmet { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: #1d1d1d; border-top: 1px solid #1d1d1d; }
+  .cmet div { background: var(--page); padding: 9px 10px; }
+  .cmet .mk { display: block; font-family: 'Silkscreen', monospace; font-size: 8px; letter-spacing: .14em; color: #5f665f; }
+  .cmet .mv { display: block; font-size: 15px; margin-top: 3px; }
+  .cmet .mf { display: block; font-size: 10px; letter-spacing: .1em; color: #4d544d; }
+
+  /* density */
+  .d-tight  { --p: 10px; --gap: 8px;  --fs: 13px; --lh: 1.5; }
+  .d-normal { --p: 14px; --gap: 12px; --fs: 14px; --lh: 1.65; }
+  .d-airy   { --p: 19px; --gap: 18px; --fs: 15px; --lh: 1.95; }
+
+  /* chrome archetypes — one per direction */
+  .ch-underline .cblk, .ch-underline .cbar { padding-left: 0; padding-right: 0; border-bottom: 1px solid var(--cdim); }
+  .ch-underline .bh { letter-spacing: .34em; }
+  .ch-double .cblk, .ch-double .cbar { border: 3px double var(--cdim); }
+  .ch-notch .cblk, .ch-notch .cbar { border: 1px solid var(--cdim); background: rgba(255,255,255,.03);
+    clip-path: polygon(11px 0, 100% 0, 100% calc(100% - 11px), calc(100% - 11px) 100%, 0 100%, 0 11px); }
+  .ch-fill .cblk, .ch-fill .cbar { border: 0; background: rgba(255,255,255,.04); }
+  .ch-fill .bh { background: var(--clab); color: var(--cbg); padding: 3px 7px; margin: calc(var(--p) * -.5) calc(var(--p) * -.5) calc(var(--p) * .55); }
+  .ch-hairline .cblk, .ch-hairline .cbar { border: 1px solid var(--cdimA); }
+  .ch-rail .cblk, .ch-rail .cbar { border-left: 5px solid var(--cfg); padding-left: calc(var(--p) + 7px); }
+  .ch-rail .bh { text-transform: uppercase; }
+  .ch-heavy .cblk, .ch-heavy .cbar { border: 2px solid var(--cdim); }
+  .ch-inv .cblk, .ch-inv .cbar { border: 0; }
+  .ch-inv .bh { background: var(--cfg); color: var(--cbg); padding: 3px 8px; margin: calc(var(--p) * -.5) calc(var(--p) * -.5) calc(var(--p) * .6); }
+  .ch-dash .cblk, .ch-dash .cbar { border: 1px dashed var(--cdim); }
+  .ch-bracket .cblk, .ch-bracket .cbar { position: relative; border: 0; }
+  .ch-bracket .cblk::before, .ch-bracket .cbar::before { content: ''; position: absolute; left: 0; top: 0; width: 14px; height: 14px; border-left: 1px solid var(--cfg); border-top: 1px solid var(--cfg); }
+  .ch-bracket .cblk::after, .ch-bracket .cbar::after { content: ''; position: absolute; right: 0; bottom: 0; width: 14px; height: 14px; border-right: 1px solid var(--cfg); border-bottom: 1px solid var(--cfg); }
+
+</style>
+<style>
+  :root {
+    --bg: #04120c; --fg: #3ff2a8; --dim: #1c7a55; --hot: #b6ffe2;
+    --glow: rgba(63,242,168,.5); --page: #060907;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--page); color: var(--fg);
+    font-family: 'Share Tech Mono', ui-monospace, monospace;
+    font-size: 17px; line-height: 1.7; letter-spacing: .04em;
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: 999; pointer-events: none;
+    background: repeating-linear-gradient(to bottom, rgba(0,0,0,.30) 0 1px, transparent 1px 3px);
+  }
+  body::after {
+    content: ''; position: fixed; inset: 0; z-index: 998; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 45%, transparent 45%, rgba(0,0,0,.55) 100%);
+  }
+  a { color: var(--hot); text-decoration: none; border-bottom: 1px solid var(--dim); }
+  a:hover { color: var(--page); background: var(--fg); border-color: var(--fg); }
+  h1, h2, h3 { font-family: 'Silkscreen', monospace; font-weight: 400; letter-spacing: .12em; margin: 0; }
+  code, kbd { font-family: 'Share Tech Mono', monospace; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 28px; }
+  .rule { height: 1px; background: var(--dim); opacity: .5; }
+
+  /* nav */
+  nav {
+    position: sticky; top: 0; z-index: 500; backdrop-filter: blur(3px);
+    background: rgba(6,9,7,.92); border-bottom: 1px solid var(--dim);
+  }
+  nav .wrap { display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 58px; }
+  nav .mark { font-family: 'Silkscreen', monospace; font-size: 15px; letter-spacing: .2em; color: var(--fg); text-shadow: 0 0 12px var(--glow); }
+  nav ul { display: flex; gap: 4px; list-style: none; margin: 0; padding: 0; flex-wrap: wrap; }
+  nav a { border: none; padding: 6px 12px; font-size: 14px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+  nav a:hover { background: var(--fg); color: var(--page); }
+
+  /* hero */
+  header { padding: 90px 0 76px; position: relative; overflow: hidden; }
+  .boot { color: var(--dim); font-size: 15px; line-height: 1.9; white-space: pre; overflow: hidden; }
+  h1 { font-size: clamp(34px, 6.4vw, 72px); color: var(--fg); text-shadow: 0 0 26px var(--glow); margin: 26px 0 0; line-height: 1.1; }
+  .tagline { margin-top: 22px; font-size: 20px; color: var(--hot); max-width: 720px; text-wrap: pretty; }
+  .sub { margin-top: 14px; font-size: 16px; color: var(--dim); max-width: 720px; }
+  .caret { animation: blink 1.06s step-end infinite; }
+  @keyframes blink { 0%,49% { opacity: 1 } 50%,100% { opacity: 0 } }
+
+  .cmd {
+    margin-top: 38px; display: flex; align-items: stretch; gap: 0;
+    border: 1px solid var(--dim); background: rgba(0,0,0,.55); max-width: 720px;
+  }
+  .cmd { flex-wrap: wrap; }
+  .cmd pre { margin: 0; padding: 18px 20px; flex: 1 1 320px; min-width: 0; font-size: 16px; color: var(--fg); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .cmd button { flex: 0 0 auto; }
+  .cmd button {
+    font-family: 'Silkscreen', monospace; font-size: 11px; letter-spacing: .18em;
+    background: transparent; color: var(--dim); border: none; border-left: 1px solid var(--dim);
+    padding: 0 20px; cursor: pointer;
+  }
+  .cmd button:hover { background: var(--fg); color: var(--page); }
+
+  .cta { margin-top: 30px; display: flex; gap: 14px; flex-wrap: wrap; }
+  .btn {
+    font-family: 'Silkscreen', monospace; font-size: 12px; letter-spacing: .18em;
+    padding: 14px 22px; border: 1px solid var(--dim); color: var(--fg);
+  }
+  .btn:hover { background: var(--fg); color: var(--page); border-color: var(--fg); }
+  .btn.pri { border-color: var(--fg); color: var(--hot); }
+
+  /* sections */
+  section { padding: 84px 0; }
+  .shead { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; margin-bottom: 8px; }
+  .shead .n { font-family: 'Silkscreen', monospace; font-size: 15px; color: var(--page); background: var(--fg); padding: 5px 10px; }
+  .shead h2 { font-size: 26px; color: var(--fg); }
+  .shead .note { font-size: 15px; color: var(--dim); letter-spacing: .12em; text-transform: uppercase; }
+  .lede { color: var(--hot); max-width: 780px; margin: 18px 0 44px; text-wrap: pretty; }
+
+  /* feature grid */
+  .feats { display: grid; grid-template-columns: repeat(auto-fit, minmax(268px, 1fr)); gap: 1px; background: var(--dim); border: 1px solid var(--dim); }
+  .feat { background: var(--page); padding: 26px 24px; }
+  .feat h3 { font-size: 14px; color: var(--hot); letter-spacing: .2em; }
+  .feat p { margin: 12px 0 0; font-size: 15px; color: var(--dim); }
+
+  /* preset gallery */
+  .gal { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 26px; }
+  .card { border: 1px solid #1d1d1d; }
+  .card .top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 14px 18px; background: #0d0f0d; border-bottom: 1px solid #1d1d1d; }
+  .card .top b { font-family: 'Silkscreen', monospace; font-size: 15px; letter-spacing: .14em; font-weight: 400; }
+  .card .top span { font-size: 12px; letter-spacing: .1em; color: #5f665f; text-transform: uppercase; }
+  .swatches { display: grid; grid-template-columns: repeat(4, 1fr); }
+  .swatches div { height: 34px; }
+  .demo { position: relative; overflow: hidden; padding: 22px 20px; border-top: 1px solid; }
+  .demo::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(to bottom, rgba(0,0,0,.3) 0 1px, transparent 1px 3px); }
+  .demo.light::before { background: repeating-linear-gradient(to bottom, rgba(0,0,0,.09) 0 1px, transparent 1px 3px); }
+  .demo > * { position: relative; }
+  .prompt { border: 1px solid; background: rgba(0,0,0,.5); padding: 14px 16px; }
+  .prompt .u { font-family: 'Silkscreen', monospace; font-size: 11px; letter-spacing: .22em; }
+  .prompt .l { margin-top: 10px; font-family: 'Silkscreen', monospace; font-size: 9px; letter-spacing: .2em; }
+  .prompt .e { margin-top: 6px; border-bottom: 1px solid; padding: 4px 2px; font-family: 'VT323', monospace; font-size: 20px; }
+  .term { margin-top: 16px; font-size: 14px; line-height: 1.7; }
+  .bar { display: flex; align-items: center; gap: 8px; height: 52px; padding: 0 8px; border: 1px solid; letter-spacing: .14em; position: relative; white-space: nowrap; line-height: 1; }
+  .bar > * { flex: 0 0 auto; }
+  .bar .org { font-family: 'Silkscreen', monospace; font-size: 11px; letter-spacing: .18em; }
+  .bar .wm { font-family: 'Share Tech Mono', monospace; font-size: 11px; letter-spacing: .12em; padding: 2px 4px; }
+  .bar .clk { margin-left: auto; font-family: 'Share Tech Mono', monospace; font-size: 11px; }
+  .bar .ro { font-family: 'Share Tech Mono', monospace; font-size: 10px; }
+  .bar .hz { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; }
+  .bar .gauges { display: flex; gap: 0; }
+  .gauge { display: flex; align-items: center; gap: 4px; padding: 0 6px; border-left: 1px solid; }
+  .gauge .gl { font-family: 'Silkscreen', monospace; font-size: 8px; letter-spacing: .16em; }
+  .gauge .gv { font-family: 'Share Tech Mono', monospace; font-size: 11px; letter-spacing: .06em; }
+  .gauge .gs { display: flex; align-items: flex-end; gap: 1px; height: 13px; }
+  .gauge .gs i { width: 2px; display: block; }
+  .tbar .gauges { margin-left: auto; display: flex; gap: 0; flex: 0 1 auto; min-width: 0; overflow: hidden; }
+  .tbar .ind, .tbar .org { flex: none; }
+  .tbar .gauge { padding: 0 .62cqw; gap: .38cqw; flex: none; }
+  .tbar .gauge .gl { font-size: 1cqw; letter-spacing: .14em; }
+  .tbar .gauge .gv { font-size: 1.25cqw; }
+  .tbar .gauge .gs { height: 2.1cqw; gap: .12cqw; }
+  .tbar .gauge .gs i { width: .26cqw; transition: height .85s cubic-bezier(.25,.1,.25,1); }
+  .tbar .gauge .gv { transition: color .3s linear; }
+  .gpop { position: absolute; border: 1px solid; padding: .7cqw .9cqw; width: 22cqw; font-family: 'Share Tech Mono', monospace; }
+  .gpop .gh { font-family: 'Silkscreen', monospace; font-size: .85cqw; letter-spacing: .2em; padding-bottom: .6cqw; margin-bottom: .6cqw; border-bottom: 1px solid; }
+  .gpop .gr { display: flex; justify-content: space-between; gap: 1.2cqw; font-size: .95cqw; letter-spacing: .1em; padding: .18cqw 0; white-space: nowrap; }
+  .lsblock { margin-top: 14px; font-size: 14px; line-height: 1.65; }
+  .lsblock .ls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 20px; margin-top: 4px; }
+  .lsblock .ls span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .badge { font-family: 'Silkscreen', monospace; font-size: 9px; letter-spacing: .16em; padding: 3px 7px; border: 1px solid; }
+
+  /* desktop mock */
+  .dtabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 22px; }
+  .dtab { white-space: nowrap; font-family: 'Silkscreen', monospace; font-size: 9px; letter-spacing: .16em; padding: 7px 10px; border: 1px solid var(--dim); background: none; color: var(--dim); cursor: pointer; }
+  .dtab[aria-selected="true"] { color: var(--page); background: var(--fg); border-color: var(--fg); }
+  .stage { position: relative; aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid var(--dim); container-type: inline-size; }
+  .stage * { box-sizing: border-box; }
+  .wall { position: absolute; inset: 0; }
+  .wall .meta { position: absolute; font-family: 'Share Tech Mono', monospace; font-size: 1.05cqw; letter-spacing: .12em; }
+  .wall .mark { position: absolute; left: 0; right: 0; top: 24%; text-align: center; }
+  .wall .mark .glyph { display: block; width: 8.4cqw; margin: 0 auto 2cqw; }
+  .wall .mark .org { font-family: 'Silkscreen', monospace; font-size: 3.4cqw; letter-spacing: .34em; display: block; }
+  .wall .mark .tag { font-family: 'Share Tech Mono', monospace; font-size: 1.35cqw; letter-spacing: .38em; display: block; margin-top: 1.6cqw; }
+  .tbar { position: absolute; left: 0; right: 0; top: 0; height: 5.4cqw; display: flex; align-items: center; gap: 1cqw; padding: 0 1cqw; white-space: nowrap; line-height: 1; }
+  .tbar > * { flex: 0 0 auto; }
+  .tbar .org { font-family: 'Silkscreen', monospace; font-size: 1.05cqw; letter-spacing: .2em; }
+  .tbar .wm { font-family: 'Share Tech Mono', monospace; font-size: 1.05cqw; letter-spacing: .14em; padding: .2cqw .5cqw; }
+  .tbar .clock { font-family: 'Share Tech Mono', monospace; font-size: 1.2cqw; letter-spacing: .14em; }
+  .tbar .ro { margin-left: auto; font-family: 'Share Tech Mono', monospace; font-size: 1cqw; letter-spacing: .1em; }
+  .tbar .ind { display: flex; gap: .7cqw; font-family: 'Share Tech Mono', monospace; font-size: 1cqw; }
+  .tbar .hz { position: absolute; left: 0; right: 0; bottom: 0; height: .3cqw; }
+  .win { position: absolute; left: 5%; top: 16%; width: 52%; border: 1px solid; }
+  .win .chrome { display: flex; align-items: center; justify-content: space-between; padding: .7cqw 1cqw; border-bottom: 1px solid; font-family: 'Silkscreen', monospace; font-size: .95cqw; letter-spacing: .16em; }
+  .win .chrome .btns { display: flex; gap: .6cqw; font-family: 'Share Tech Mono', monospace; }
+  .win .body { padding: 1.1cqw 1.2cqw 1.4cqw; font-family: 'Share Tech Mono', monospace; font-size: 1.05cqw; line-height: 1.75; }
+  .win .body .ls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 1.2cqw; margin-top: .5cqw; }
+  .qs { position: absolute; right: 4%; top: 46%; width: 24%; border: 1px solid; padding: 1cqw; }
+  .qs .sys { display: flex; gap: .45cqw; margin-bottom: .9cqw; }
+  .qs .sys b { flex: 1; border: 1px solid; text-align: center; font-family: 'Share Tech Mono', monospace; font-size: .9cqw; font-weight: 400; padding: .35cqw 0; }
+  .qs .grid { display: grid; grid-template-columns: 1fr 1fr; gap: .7cqw; }
+  .qs .tog s { display: block; text-decoration: none; font-size: .78cqw; letter-spacing: .12em; margin-top: .15cqw; }
+  .qs .sl { display: flex; align-items: center; gap: .5cqw; }
+  .qs .sl > u { position: relative; flex: 1; height: .8cqw; border: 1px solid; }
+  .qs .sl > u i { position: absolute; inset: 0 auto 0 0; display: block; }
+  .qs .sl > u b { position: absolute; top: -.28cqw; width: .55cqw; height: 1.36cqw; }
+  .qs .tog { border: 1px solid; padding: .7cqw .6cqw; font-family: 'Share Tech Mono', monospace; font-size: .95cqw; letter-spacing: .1em; }
+  .qs .sl { margin-top: .9cqw; }
+  .qs .foot { display: flex; justify-content: space-between; margin-top: .9cqw; font-family: 'Share Tech Mono', monospace; font-size: .9cqw; letter-spacing: .12em; }
+  .scan { position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(to bottom, rgba(0,0,0,.26) 0 1px, transparent 1px 3px); }
+  .vig { position: absolute; inset: 0; pointer-events: none; }
+  .stage .cap { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; padding: .7cqw 1cqw; font-family: 'Share Tech Mono', monospace; font-size: .95cqw; letter-spacing: .14em; }
+
+  /* tables / commands */
+  .cmds { display: grid; grid-template-columns: 1fr; gap: 1px; background: var(--dim); border: 1px solid var(--dim); }
+  .row { display: grid; grid-template-columns: minmax(230px, 320px) 1fr; gap: 18px; background: var(--page); padding: 15px 20px; }
+  .row code { color: var(--hot); font-size: 15px; }
+  .row p { margin: 0; font-size: 15px; color: var(--dim); }
+  @media (max-width: 620px) { .row { grid-template-columns: 1fr; gap: 6px; } }
+
+  /* download */
+  .dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+  .dlcard { border: 1px solid var(--dim); padding: 26px 24px; background: rgba(0,0,0,.4); }
+  .dlcard h3 { font-size: 14px; color: var(--hot); letter-spacing: .18em; }
+  .dlcard p { font-size: 15px; color: var(--dim); }
+  pre.block { border: 1px solid var(--dim); background: rgba(0,0,0,.55); padding: 18px 20px; font-size: 15px; color: var(--fg); margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+  footer { padding: 58px 0 76px; border-top: 1px solid var(--dim); }
+  footer p { font-size: 14px; color: var(--dim); margin: 0 0 8px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="mark">PTAI</div>
+    <ul>
+      <li><a href="#quickstart">Install</a></li>
+      <li><a href="#what">What it does</a></li>
+      <li><a href="#presets">Presets</a></li>
+      <li><a href="#candidates">Candidates</a></li>
+      <li><a href="#desktop">Desktop</a></li>
+      <li><a href="#apps">Apps &amp; icons</a></li>
+      <li><a href="#commands">Commands</a></li>
+      <li><a href="#download">Download</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header id="quickstart">
+  <div class="wrap">
+    <div class="boot">WEYLAND-YUTANI CORP // PERSONAL TERMINAL ACCESS INTERFACE
+LINK NOMINAL &middot; CHANNEL GREEN &middot; FEDORA 44 WORKSTATION
+&gt;WYC REMINDER: SAFETY SECOND! PROFIT FIRST!<span class="caret">_</span></div>
+    <h1>A CRT terminal,<br>system-wide.</h1>
+    <p class="tagline">PTAI themes the whole of Fedora Workstation as one machine: the shell, the login screen, the terminal, the type and the wallpaper — with live scanlines, phosphor glow and a slow sweep band over terminal windows.</p>
+    <p class="sub">One installer. Nine presets. Everything reversible.</p>
+
+    <div class="cmd">
+      <pre id="ic">git clone https://github.com/nukra/nukra-yutani
+cd nukra-yutani
+./ptai-theme install green</pre>
+      <button onclick="navigator.clipboard.writeText(document.getElementById('ic').textContent);this.textContent='COPIED'">COPY</button>
+    </div>
+
+    <div class="cta">
+      <a class="btn pri" href="#download">Download</a>
+      <a class="btn" href="#presets">See the presets</a>
+      <a class="btn" href="#commands">Commands</a>
+    </div>
+  </div>
+</header>
+
+<div class="rule"></div>
+
+<section id="what">
+  <div class="wrap">
+    <div class="shead"><span class="n">01</span><h2>What it does</h2><span class="note">one script, seven surfaces</span></div>
+    <p class="lede">Every piece is generated from a single preset file, so switching colour changes all of them at once.</p>
+    <div class="feats">
+      <div class="feat"><h3>GNOME SHELL</h3><p>Panel, overview, popups, dialogs and notifications restyled square and monochrome, with a scanline tile behind the top bar.</p></div>
+      <div class="feat"><h3>GDM GREETER</h3><p>Wallpaper, fonts, banner and full chrome — patched into the shell's gresource, with a dnf hook so a GNOME update does not revert it.</p></div>
+      <div class="feat"><h3>TERMINAL</h3><p>Full 16-colour ANSI ramp for Ptyxis, a boot-sequence banner on every new shell, and a typed-reveal effect on command output.</p></div>
+      <div class="feat"><h3>CRT OVERLAY</h3><p>A GNOME extension compositing scanlines, vignette, phosphor glow, configurable flicker and a slow light sweep — over terminal windows only.</p></div>
+      <div class="feat"><h3>TYPE</h3><p>Silkscreen for labels, Share Tech Mono for body, VT323 for entry fields. Installed to the user, and system-wide for the greeter.</p></div>
+      <div class="feat"><h3>REVERSIBLE</h3><p><code>uninstall</code> and <code>gdm-restore</code> put every file back, including the gresource, byte-for-byte from a stored pristine copy.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="rule"></div>
+
+<section id="presets">
+  <div class="wrap">
+    <div class="shead"><span class="n">02</span><h2>Presets</h2><span class="note">nine shipped &middot; ls colours per preset</span></div>
+    <p class="lede">Each preset is four values — background, dim, foreground, hot — expanded into a 16-colour ANSI ramp. Below: the greeter prompt and a terminal, in every palette.</p>
+    <div class="gal" id="gal"></div>
+  </div>
+</section>
+
+<div class="rule"></div>
+
+<section id="candidates">
+  <div class="wrap">
+    <div class="shead"><span class="n">03</span><h2>Candidate directions</h2><span class="note">ten &middot; not shipped</span></div>
+    <p class="lede">Ten complete directions rather than ten palettes: each one sets its own type pairing, border language, panel furniture, scanline weight and density, drawn from a different corner of the fiction. Every card shows the same four surfaces &mdash; top bar, greeter, session, listing &mdash; so the differences are the design, not the content. Contrast is measured against the same floors the shipped nine hold to.</p>
+    <div class="cands" id="cands"></div>
+  </div>
+</section>
+
+<div class="rule"></div>
+
+<section id="desktop">
+  <div class="wrap">
+    <div class="shead"><span class="n">04</span><h2>Desktop</h2><span class="note">drawn, not photographed</span></div>
+    <p class="lede">A schematic of the session: top bar furniture, a terminal, and the quick-settings popup. The bar sits at 52px and carries live gauges &mdash; CPU, memory, network, temperature, load, uptime &mdash; each with a sparkline of the last four minutes and a click-through detail panel, all sampled from <code>/proc</code> every two seconds. Percentage metrics share a fixed axis; network throughput has no ceiling, so it scales against the largest sample in view. Rendered from the same preset values the installer writes, so it tracks the palette rather than a screenshot.</p>
+    <div class="dtabs" id="dtabs"></div>
+    <div class="stage" id="stage"></div>
+  </div>
+</section>
+
+<div class="rule"></div>
+
+
+<style>
+/* apps + icon pack */
+.appgrid { display:grid; grid-template-columns:1.35fr 1fr; gap:22px; margin-top:22px }
+@media (max-width:900px){ .appgrid { grid-template-columns:1fr } }
+.mock { border:1px solid; container-type:inline-size; overflow:hidden }
+.mock .hb { display:flex; align-items:center; gap:10px; padding:8px 10px; border-bottom:1px solid; font-size:11px; letter-spacing:.14em }
+.mock .hb .t { text-transform:uppercase }
+.mock .hb .sp { margin-left:auto }
+.mock .pb { display:flex; border:1px solid; font-size:11px }
+.mock .pb span { padding:2px 9px; border-right:1px solid }
+.mock .pb span:last-child { border-right:none }
+.mock .cols { display:grid; grid-template-columns:1fr 74px 104px }
+.mock .ch { display:grid; grid-template-columns:1fr 74px 104px; font-size:10px; letter-spacing:.16em; text-transform:uppercase; border-bottom:1px solid }
+.mock .ch span, .mock .fr > span { padding:5px 9px }
+.mock .fr { display:grid; grid-template-columns:1fr 74px 104px; font-size:12px; align-items:center }
+.mock .fr .nm { display:flex; align-items:center; gap:8px }
+.mock .fr .nm svg { width:17px; height:17px; flex:none }
+.mock .body { display:grid; grid-template-columns:150px 1fr }
+.mock .sb { border-right:1px solid; padding:8px 0; font-size:12px }
+.mock .sb .it { display:flex; align-items:center; gap:8px; padding:4px 10px; border-left:2px solid transparent }
+.mock .sb .it svg { width:16px; height:16px; flex:none }
+.mock .sb .hd { font-size:10px; letter-spacing:.18em; padding:10px 10px 4px }
+.mock .grp { border:1px solid; margin:10px }
+.mock .prow { display:flex; align-items:center; gap:10px; padding:9px 10px; border-bottom:1px solid; font-size:12px }
+.mock .prow:last-child { border-bottom:none }
+.mock .prow .sub { display:block; font-size:10px; letter-spacing:.1em }
+.mock .sw { margin-left:auto; width:40px; height:20px; border:1px solid; flex:none; padding:1px }
+.mock .sw i { display:block; width:16px; height:16px }
+.mock .sc { margin-left:auto; width:120px; height:6px; border:1px solid; position:relative; flex:none }
+.mock .sc i { position:absolute; inset:0 auto 0 0; display:block }
+.mock .sc b { position:absolute; top:-6px; width:9px; height:16px }
+.mock .kc { border:1px solid; padding:1px 7px; font-size:11px; margin-left:auto }
+.icons { display:grid; grid-template-columns:repeat(auto-fill,minmax(112px,1fr)); gap:1px; margin-top:22px; border:1px solid }
+.icons .ic { display:flex; flex-direction:column; align-items:center; gap:9px; padding:16px 6px; outline:1px solid }
+.icons .ic svg { width:34px; height:34px }
+.icons .ic span { font-size:9.5px; letter-spacing:.08em; text-align:center; word-break:break-all }
+.iconnote { display:flex; flex-wrap:wrap; gap:18px; margin-top:16px; font-size:11px; letter-spacing:.12em }
+</style>
+<section id="apps">
+  <div class="wrap">
+    <div class="shead"><span class="n">05</span><h2>Apps &amp; icons</h2><span class="note">files &middot; settings &middot; 63 icon names</span></div>
+    <p class="lede">GTK apps follow the preset too. <code>install</code> writes <code>gtk.css</code> for GTK3 and GTK4, so Files and Settings pick up the palette, the square controls, and the uppercase header bars &mdash; pass <code>--no-gtk</code> to leave them on stock Adwaita. The icon set is drawn to the same rules as the wallpaper: 1.4px strokes, mitred corners, three colours per glyph. Anything it does not cover falls through to Adwaita.</p>
+    <div class="dtabs" id="atabs"></div>
+    <div class="appgrid" id="appstage"></div>
+    <div class="icons" id="iconstage"></div>
+    <div class="iconnote" id="iconnote"></div>
+  </div>
+</section>
+
+
+<section id="commands">
+  <div class="wrap">
+    <div class="shead"><span class="n">06</span><h2>Commands</h2><span class="note">./ptai-theme &lt;command&gt;</span></div>
+    <p class="lede">The greeter commands need root; everything else runs as you.</p>
+    <div class="cmds">
+      <div class="row"><code>install [PRESET]</code><p>Install everything: shell theme, GTK app colours, icon set, terminal palette, fonts, wallpaper, banner, CRT extension.</p></div>
+      <div class="row"><code>reload</code><p>Re-render everything from the working copy and re-import the extension in place. Picks up edits to the shell CSS, extension JS, icons and GTK sheet without a logout &mdash; the iteration loop while you are changing the theme.</p></div>
+      <div class="row"><code>install --no-gtk --no-icons</code><p>Shell and terminal only. Leaves GTK apps and icons on Fedora stock.</p></div>
+      <div class="row"><code>set PRESET</code><p>Switch colour without reinstalling. Regenerates every generated file from the preset.</p></div>
+      <div class="row"><code>list</code><p>Show available presets.</p></div>
+      <div class="row"><code>status</code><p>Report what is installed, which preset is active, and the state of the CRT overlay and greeter.</p></div>
+      <div class="row"><code>crt subtle | standard | heavy | off</code><p>Effect intensity. <code>crt terminal | screen</code> sets whether the overlay covers terminal windows or the whole session.</p></div>
+      <div class="row"><code>sudo … gdm [PRESET]</code><p>Theme the login screen: dconf settings, system fonts, and the gresource chrome patch.</p></div>
+      <div class="row"><code>sudo … gdm-doctor</code><p>Report every link in the greeter chain and name the one that failed.</p></div>
+      <div class="row"><code>sudo … gdm-edit</code><p>Edit the live greeter CSS and re-patch on save. <code>gdm-reload</code> re-patches, <code>gdm-preview</code> opens a nested greeter.</p></div>
+      <div class="row"><code>ptai-type off | slow | fast</code><p>In-shell control of the typed-reveal effect. <code>raw &lt;cmd&gt;</code> bypasses it, <code>crt &lt;cmd&gt;</code> forces it.</p></div>
+      <div class="row"><code>uninstall</code><p>Remove everything. As root it also restores the stock greeter.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="rule"></div>
+
+<section id="download">
+  <div class="wrap">
+    <div class="shead"><span class="n">07</span><h2>Download</h2><span class="note">fedora 44 &middot; gnome 47–50</span></div>
+    <p class="lede">No build step. Clone or unzip, run the script.</p>
+    <div class="dl">
+      <div class="dlcard">
+        <h3>CLONE</h3>
+        <p>Best option — <code>git pull</code> picks up changes and re-applying is one command.</p>
+        <pre class="block">git clone https://github.com/nukra/nukra-yutani
+cd nukra-yutani
+./ptai-theme install green</pre>
+      </div>
+      <div class="dlcard">
+        <h3>ARCHIVE</h3>
+        <p>Grab the latest tag from the releases page, unpack anywhere, run in place.</p>
+        <pre class="block">tar xf ptai-theme.tar.gz
+cd ptai-theme
+./ptai-theme install ice</pre>
+        <p style="margin-top:16px"><a class="btn" href="https://github.com/nukra/nukra-yutani/releases">Releases</a></p>
+      </div>
+      <div class="dlcard">
+        <h3>LOGIN SCREEN</h3>
+        <p>Separate step, needs root and <code>glib2-devel</code>. Restarting GDM ends your session.</p>
+        <pre class="block">sudo dnf install glib2 glib2-devel
+sudo ./ptai-theme gdm green
+sudo systemctl restart gdm</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>PTAI is an original theme. Weyland-Yutani is a fictional company; no affiliation with, or assets from, any rights holder.</p>
+    <p>Tested on Fedora 44 Workstation, GNOME Shell 47 through 50, Wayland.</p>
+  </div>
+</footer>
+
+<script>
+// generated from presets/*.conf — the same ROLE_* values the shell's LS_COLORS uses
+const ROLES = {"amber":{"DIR":"#fce7c5","EXEC":"#e6faa8","LINK":"#f7646b","FILE":"#d0973c","MEDIA":"#4ff04c","ARCH":"#cf4b94","DEV":"#8de2b0","META":"#a17f36"},"green":{"DIR":"#93baa9","EXEC":"#abe6f7","LINK":"#78ee6d","FILE":"#3cab7d","MEDIA":"#6a6fe9","ARCH":"#7bb52c","DEV":"#af92dd","META":"#389172"},"ice":{"DIR":"#75afd1","EXEC":"#a8b0fa","LINK":"#64f7bd","FILE":"#d9f4ff","MEDIA":"#b54cf0","ARCH":"#22bf32","DEV":"#e28ddc","META":"#4285a7"},"lithium":{"DIR":"#a7b3b7","EXEC":"#c2c6e0","LINK":"#94c6b2","FILE":"#749caa","MEDIA":"#a582ba","ARCH":"#558b5a","DEV":"#c6a9c5","META":"#6a808a"},"magnetic":{"DIR":"#e4c5fc","EXEC":"#faa8ea","LINK":"#6472f7","FILE":"#a454e1","MEDIA":"#f04c56","ARCH":"#2280bf","DEV":"#e2ac8d","META":"#d67dd3"},"nostromo":{"DIR":"#f4f4cd","EXEC":"#caedb5","LINK":"#dc9e7e","FILE":"#b2b256","MEDIA":"#69d390","ARCH":"#bf6272","DEV":"#9cd3c8","META":"#898d49"},"oxide":{"DIR":"#fccec5","EXEC":"#faeaa8","LINK":"#f764ae","FILE":"#eb9c8c","MEDIA":"#99f04c","ARCH":"#c63dc7","DEV":"#90e28d","META":"#b1664f"},"p1":{"DIR":"#9ac5a5","EXEC":"#a8faf1","LINK":"#a1f764","FILE":"#34b656","MEDIA":"#4c8bf0","ARCH":"#b2bf22","DEV":"#918de2","META":"#349b54"},"paper":{"DIR":"#44403b","EXEC":"#242815","LINK":"#572e31","FILE":"#77564a","MEDIA":"#3c693a","ARCH":"#885372","DEV":"#2d4436","META":"#6c614c"}};
+const PRESETS = [
+  ['GREEN','default · P3 phosphor','#04120c','#1c7a55','#3ff2a8','#b6ffe2','rgba(63,242,168,.5)',1],
+  ['AMBER','warm CRT','#150c02','#8a5a12','#ffb43c','#ffe6b8','rgba(255,180,60,.5)',1],
+  ['ICE','cold cathode','#050f18','#1f6a8c','#6fd8ff','#cdf1ff','rgba(111,216,255,.5)',1],
+  ['OXIDE','caution console','#120604','#8a2a14','#ff5c3c','#ffc9b8','rgba(255,92,60,.5)',1],
+  ['LITHIUM','no hue','#0d0f10','#4a5459','#c8d4d8','#ffffff','rgba(200,212,216,.35)',1],
+  ['NOSTROMO','sodium yellow','#10100a','#6e6e18','#d4d43c','#f4f4c0','rgba(212,212,60,.45)',1],
+  ['MAGNETIC','violet phosphor','#0a0616','#5a2a8a','#c77dff','#f0dcff','rgba(199,125,255,.5)',1],
+  ['P1 HIGH KEY','heavier bloom','#020a04','#12833a','#33ff66','#c8ffd8','rgba(51,255,102,.6)',1],
+  ['PAPER','daylight readable · light mode','#e8e2d4','#8a8274','#2a2620','#000000','rgba(42,38,32,.15)',1,1]
+];
+// ---- panel gauges (mirrors the extension's sampled readout) ----
+// fixed sample rings so the schematic is stable between redraws
+const SPARK = {
+  CPU:  [18,24,31,22,44,52,38,29,35,61,72,48,33,27,41,58,46],
+  MEM:  [52,53,53,55,56,56,58,57,59,60,60,61,61,62,62,63,63],
+  TEMP: [41,42,44,43,46,48,47,49,52,54,53,55,54,56,58,57,59],
+  NET:  [4,9,38,96,124,55,21,12,6,3,18,44,88,31,14,8,11]
+};
+const GAUGES = [
+  ['CPU','46%','CPU', [['UTILISATION','46%'],['LOAD 1/5/15','0.42 0.38 0.31'],['PROCESSES','2/318'],['PEAK (4 MIN)','72%']]],
+  ['MEM','38%','MEM', [['IN USE','6.1 / 16.0 GB'],['UTILISATION','38%'],['SWAP','0%']]],
+  ['NET','\u25be840K','NET',[['DOWN','840K/S'],['UP','12K/S'],['PEAK (4 MIN)','2.1M/S']]],
+  ['TEMP','54C','TEMP',[['SENSOR 0','54 C'],['PEAK (4 MIN)','59 C']]],
+  ['UP','3H07',null, [['UPTIME','3H07'],['CPU / MEM','46% / 38%']]]
+];
+// throughput has no ceiling, so its sparkline scales against the window max
+const AUTOSCALE = {NET: 1};
+function gauges(fg, dim, hot, lab) {
+  // card scale: CPU and MEM only, values without sparklines
+  return `<span class="gauges">` + GAUGES.slice(0, 2).map(([label, val]) => `
+    <span class="gauge" style="border-left-color:${dim}">
+      <span class="gl" style="color:${lab || dim}">${label}</span>
+      <span class="gv" style="color:${fg}">${val}</span>
+    </span>`).join('') + `</span>`;
+}
+function gaugesCq(fg, dim, lab) {
+  return `<span class="gauges" id="livegauges">` + GAUGES.map(([label, val, spark]) => `
+    <span class="gauge" style="border-left-color:${dim}" data-metric="${spark || ''}">
+      <span class="gl" style="color:${lab || dim}">${label}</span>
+      <span class="gv" style="color:${fg}">${spark ? fmt(spark) : val}</span>
+      ${spark ? `<span class="gs">${SPARK[spark].slice(-12).map(v => `<i style="height:${barH(spark, v, 0.021)};background:${fg}"></i>`).join('')}</span>` : ''}
+    </span>`).join('') + `</span>`;
+}
+
+document.getElementById('gal').innerHTML = PRESETS.map(([name,note,bg,dim,fg,hot,glow,shipped,light]) => {
+  const label = light ? bg : fg;
+  const scrim = light ? 'rgba(255,255,255,.5)' : 'rgba(0,0,0,.5)';
+  const R = ROLES[name.toLowerCase().split(' ')[0]];
+  return `
+  <div class="card">
+    <div class="top"><b style="color:${label}">${name}</b><span>${note}</span></div>
+    <div class="swatches"><div style="background:${bg}"></div><div style="background:${dim}"></div><div style="background:${fg}"></div><div style="background:${hot}"></div></div>
+    <div class="demo${light ? ' light' : ''}" style="background:${bg};border-top-color:${dim}">
+      <div class="bar" style="border-color:${dim};background:${scrim}">
+        <span class="org" style="color:${hot};text-shadow:0 0 8px ${glow}">HELIOS-YUTANI</span>
+        <span class="wm" style="color:${bg};background:${fg}">PTAI</span>
+        <span class="clk" style="color:${hot}">08:24</span>
+        ${gauges(fg, dim, hot, R.META)}
+        <span class="hz" style="background:repeating-linear-gradient(115deg, ${dim} 0 4px, transparent 4px 9px)"></span>
+      </div>
+      <div class="prompt" style="margin-top:12px;border-color:${dim};background:${scrim}">
+        <div class="u" style="color:${fg};text-shadow:0 0 10px ${glow}">NUKRA</div>
+        <div class="l" style="color:${hot}">PASSWORD</div>
+        <div class="e" style="color:${fg};border-bottom-color:${dim}">&bull;&bull;&bull;&bull;&bull;&bull;&bull;<span class="caret">_</span></div>
+      </div>
+      <div class="term">
+        <div style="color:${dim}">[nukra@ptai][~]</div>
+        <div style="color:${hot}">&gt;CMD:/ <span style="color:${fg}">ptai-theme status</span></div>
+        <div style="color:${fg}">&nbsp;&nbsp;preset ${name.toLowerCase().split(' ')[0]} &middot; crt normal &middot; greeter themed</div>
+      </div>
+      <div class="lsblock">
+        <div style="color:${hot}">&gt;CMD:/ <span style="color:${fg}">ls</span></div>
+        <div class="ls">
+          <span style="color:${R.DIR};font-weight:700">bin/</span>
+          <span style="color:${R.EXEC};font-weight:700">run-diagnostics</span>
+          <span style="color:${R.LINK};text-decoration:underline">latest &rarr; v2</span>
+          <span style="color:${R.FILE}">manifest.txt</span>
+          <span style="color:${R.MEDIA};font-style:italic">schematic.png</span>
+          <span style="color:${R.ARCH};font-weight:700">archive.tar.gz</span>
+          <span style="color:${R.DEV};font-weight:700">ttyS0</span>
+          <span style="color:${R.META};font-style:italic">session.log</span>
+          <span style="color:${bg};background:${R.ARCH};font-weight:700;padding:0 3px">broken &rarr; gone</span>
+        </div>
+      </div>
+      <div style="margin-top:16px"><span class="badge" style="color:${fg};border-color:${fg}">SHIPPED</span></div>
+    </div>
+  </div>`;
+}).join('');
+
+// ---- desktop schematic ----
+const stage = document.getElementById('stage');
+// live tick — mirrors the extension's 2s sampler so the schematic reads as running
+const WALK = { CPU: [4, 96, 22], MEM: [30, 78, 4], TEMP: [38, 72, 3], NET: [0, 140, 46] };
+function fmt(k) {
+  const v = Math.round(SPARK[k][SPARK[k].length - 1]);
+  if (k === 'TEMP') return v + 'C';
+  if (k === 'NET') {
+    // one figure at schematic scale: two rates make this gauge 60% wider than
+    // its neighbours and push the indicator group off the bar
+    const kb = v * 14;
+    return '\u25be' + (kb > 999 ? (kb / 1024).toFixed(1) + 'M' : kb + 'K');
+  }
+  return String(v).padStart(2, '0') + '%';
+}
+// bar heights: fixed 0-100 axis, except autoscaled metrics which use their own max
+function barH(k, v, unit) {
+  const win = SPARK[k].slice(-12);
+  const top = AUTOSCALE[k] ? Math.max(8, ...win) : 100;
+  return (Math.max(0.04, Math.min(1, v / top)) * 100 * unit).toFixed(3) + 'cqw';
+}
+function tick() {
+  for (const [k, [lo, hi, amp]] of Object.entries(WALK)) {
+    const prev = SPARK[k][SPARK[k].length - 1];
+    const next = Math.max(lo, Math.min(hi, prev + (Math.random() - 0.5) * amp));
+    SPARK[k] = SPARK[k].slice(1).concat(next);
+  }
+  const host = document.getElementById('livegauges');
+  if (!host) return;
+  for (const g of host.querySelectorAll('.gauge[data-metric]')) {
+    const k = g.dataset.metric;
+    if (!k) continue;
+    const win = SPARK[k].slice(-12);
+    const bars = g.querySelectorAll('.gs i');
+    bars.forEach((b, i) => { b.style.height = barH(k, win[i], 0.021); });
+    const v = g.querySelector('.gv');
+    if (v) v.textContent = fmt(k);
+  }
+  const pv = document.getElementById('gpopval');
+  if (pv) pv.textContent = Math.round(SPARK.CPU[SPARK.CPU.length - 1]) + '%';
+}
+let LIVE = null;
+let TICKER = null;
+
+const dtabs = document.getElementById('dtabs');
+
+function drawDesktop(p) {
+  const [name,note,bg,dim,fg,hot,glow,shipped,light] = p;
+  LIVE = {fg, dim};
+  const R = ROLES[name.toLowerCase().split(' ')[0]];
+  const win = light ? 'rgb(255,255,255)' : 'rgb(6,6,6)';    // opaque, and distinct from the wallpaper
+  const chrome = light ? 'rgba(255,255,255,.94)' : 'rgba(0,0,0,.94)';
+  stage.innerHTML = `
+    <div class="wall" style="background:${bg};background-image:linear-gradient(${dim} 1px, transparent 1px),linear-gradient(90deg, ${dim} 1px, transparent 1px);background-size:6cqw 6cqw;background-position:-1px -1px">
+      <div class="mark">
+        <svg class="glyph" viewBox="-210 -212 420 548" aria-hidden="true" style="filter:drop-shadow(0 0 1.4cqw ${glow})">
+          <g fill="${fg}">
+            <path d="M-198,-200 h132 v200 l-82,124 v-200 z"/>
+            <path d="M-50,-64 h100 v264 l-100,-124 z" transform="translate(0,-72)"/>
+            <path d="M66,-200 h132 v124 l-132,200 v-200 z"/>
+          </g>
+        </svg>
+        <span class="org" style="color:${hot};text-shadow:0 0 2.4cqw ${glow}">HELIOS-YUTANI</span>
+        <span class="tag" style="color:${dim}">BUILDING BETTER WORLDS</span>
+      </div>
+      <div class="meta" style="left:2.2cqw;top:5.4cqw;color:${dim}">NODE: PTAI-07<br>SECTOR: 4.119.882</div>
+      <div class="meta" style="right:2.2cqw;bottom:3.4cqw;text-align:right;color:${dim}">REV 3.1 / ${name}<br>SM-LINK DATA SYSTEMS</div>
+    </div>
+
+    <div class="tbar" style="background:${chrome};border-bottom:1px solid ${dim}">
+      <span class="org" style="color:${hot};text-shadow:0 0 .8cqw ${glow}">HELIOS-YUTANI</span>
+      <span class="wm" style="color:${bg};background:${fg}">PTAI</span>
+      <span class="clock" style="color:${hot}">08:24  TUE 24 AUG</span>
+      ${gaugesCq(fg, dim, R.META)}
+      <span class="ind" style="color:${fg}">[NET] [VOL] [PWR]</span>
+      <span class="hz" style="background:repeating-linear-gradient(115deg, ${dim} 0 .4cqw, transparent .4cqw .9cqw)"></span>
+    </div>
+
+    <div class="win" style="background:${win};border-color:${dim}">
+      <div class="chrome" style="color:${dim};border-bottom-color:${dim}">
+        <span>OPERATOR@PTAI — /VAR/LOG</span>
+        <span class="btns" style="color:${dim}">[_] [□] [×]</span>
+      </div>
+      <div class="body">
+        <div style="color:${dim}">************************************</div>
+        <div style="color:${hot}">  HELIOS-YUTANI</div>
+        <div style="color:${fg}">  PERSONAL-TERMINAL-ACCESS-INTERFACE</div>
+        <div style="color:${dim}">************************************</div>
+        <div style="color:${fg};margin-top:.7cqw">&gt;ACCESS ACCEPTED</div>
+        <div style="color:${dim};margin-top:.7cqw">[operator@ptai][~]</div>
+        <div style="color:${hot}">&gt;CMD:/ <span style="color:${fg}">ls</span></div>
+        <div class="ls">
+          <span style="color:${R.DIR};font-weight:700">bin/</span>
+          <span style="color:${R.EXEC};font-weight:700">run-diagnostics</span>
+          <span style="color:${R.LINK};text-decoration:underline">latest &rarr; v2</span>
+          <span style="color:${R.FILE}">manifest.txt</span>
+          <span style="color:${R.MEDIA};font-style:italic">schematic.png</span>
+          <span style="color:${R.ARCH};font-weight:700">archive.tar.gz</span>
+          <span style="color:${R.DEV};font-weight:700">ttyS0</span>
+          <span style="color:${R.META};font-style:italic">session.log</span>
+          <span style="color:${bg};background:${R.ARCH};font-weight:700;padding:0 .3cqw">broken &rarr; gone</span>
+        </div>
+        <div style="color:${hot};margin-top:.5cqw">&gt;CMD:/ <span style="color:${fg}">_</span></div>
+      </div>
+    </div>
+
+    <div class="gpop" style="right:4%;top:6.2cqw;background:${chrome};border-color:${dim};color:${fg}">
+      <div class="gh" style="color:${hot};border-bottom-color:${dim}">CPU</div>
+      ${[['UTILISATION','<span id="gpopval">46%</span>'],['LOAD 1/5/15','0.42 0.38 0.31'],['PEAK (4 MIN)','72%'],['SAMPLED','EVERY 2S']]
+        .map(([k,v]) => `<div class="gr"><span style="color:${R.META}">${k}</span><span style="color:${hot}">${v}</span></div>`).join('')}
+    </div>
+
+    <div class="qs" style="background:${chrome};border-color:${dim}">
+      <div class="sys">
+        ${['⌗','⚙','🔒','⏻'].map(g => `<b style="border-color:${dim};color:${fg}">${g}</b>`).join('')}
+      </div>
+      <div class="grid">
+        <div class="tog" style="border-color:${fg};background:${fg};color:${bg}">WIRED<s style="color:${bg}">ETHERNET</s></div>
+        <div class="tog" style="border-color:${dim};color:${fg}">BLUETOOTH<s style="color:${R.META}">OFF</s></div>
+        <div class="tog" style="border-color:${fg};background:${fg};color:${bg}">POWER<s style="color:${bg}">PERFORMANCE</s></div>
+        <div class="tog" style="border-color:${dim};color:${fg}">NIGHT LIGHT<s style="color:${R.META}">OFF</s></div>
+        <div class="tog" style="border-color:${fg};background:${fg};color:${bg}">DARK STYLE<s style="color:${bg}">ON</s></div>
+        <div class="tog" style="border-color:${fg};background:${fg};color:${bg}">CRT<s style="color:${bg}">ON</s></div>
+      </div>
+      <div class="sl"><span style="color:${fg};font-size:.9cqw">◤</span><u style="border-color:${dim}"><i style="width:62%;background:${fg}"></i><b style="left:60%;background:${hot}"></b></u></div>
+      <div class="sl"><span style="color:${fg};font-size:.9cqw">☀</span><u style="border-color:${dim}"><i style="width:34%;background:${fg}"></i><b style="left:32%;background:${hot}"></b></u></div>
+      <div class="foot" style="color:${dim}"><span>OPERATOR</span><span style="color:${hot}">⏻</span></div>
+    </div>
+
+    <div class="scan"${light ? ' style="background:repeating-linear-gradient(to bottom, rgba(0,0,0,.08) 0 1px, transparent 1px 3px)"' : ''}></div>
+    <div class="vig" style="background:radial-gradient(120% 120% at 50% 45%, transparent 42%, rgba(0,0,0,${light ? '.18' : '.62'}) 100%)"></div>
+    <div class="cap" style="color:${dim}"><span>PRESET ${name}</span><span>${note.toUpperCase()}</span></div>`;
+}
+
+dtabs.innerHTML = PRESETS.map((p,i) =>
+  `<button class="dtab" role="tab" aria-selected="${i===0}" data-i="${i}">${p[0]}</button>`).join('');
+dtabs.addEventListener('click', e => {
+  const b = e.target.closest('.dtab');
+  if (!b) return;
+  dtabs.querySelectorAll('.dtab').forEach(t => t.setAttribute('aria-selected', t === b));
+  drawDesktop(PRESETS[+b.dataset.i]);
+});
+// running is the default state — an observer that never fires must not be able
+// to leave the bar dead, so it may only ever pause after a confirmed callback
+function startTicker() {
+  clearInterval(TICKER);
+  TICKER = setInterval(tick, 1000);
+}
+function stopTicker() { clearInterval(TICKER); TICKER = null; }
+startTicker();
+
+// Only document.hidden pauses it. A viewport gate is not worth the risk: one DOM
+// write every 2s off-screen costs nothing, and any gate that can misfire leaves
+// the bar dead.
+document.addEventListener('visibilitychange', () => {
+  document.hidden ? stopTicker() : startTicker();
+});
+drawDesktop(PRESETS[0]);
+
+// ---- icon pack (same sources the installer renders into ~/.local/share/icons) ----
+const ICONS = {"drive-harddisk":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M3.5 8.5h17v7h-17z\" fill=\"@BG@\"/><path d=\"M6 12h9\" stroke=\"@DIM@\"/><path d=\"M17.4 12h1.3\" stroke=\"@HOT@\"/> </g> </svg>","drive-optical":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <circle cx=\"12\" cy=\"12\" r=\"8.6\" fill=\"@BG@\"/><circle cx=\"12\" cy=\"12\" r=\"2.7\" stroke=\"@DIM@\"/><path d=\"M12 3.4v2.2\" stroke=\"@HOT@\"/> </g> </svg>","drive-removable-media":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M4.5 6.5h15v11h-15z\" fill=\"@BG@\"/><path d=\"M8.5 6.5v5h7v-5\" stroke=\"@DIM@\"/><path d=\"M8.5 14h7v3.5h-7z\" stroke=\"@HOT@\"/> </g> </svg>","folder-documents":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M2.5 6.5h6.6l2 2.6H21.5V20.5H2.5z\" fill=\"@BG@\"/><path d=\"M8 13.2h8M8 16h8M8 18.8h5\" stroke=\"@DIM@\"/> </g> </svg>","folder-download":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M2.5 6.5h6.6l2 2.6H21.5V20.5H2.5z\" fill=\"@BG@\"/><path d=\"M12 12.6v5M9.5 15.2l2.5 2.6 2.5-2.6\" stroke=\"@HOT@\"/> </g> </svg>","folder-music":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M2.5 6.5h6.6l2 2.6H21.5V20.5H2.5z\" fill=\"@BG@\"/><path d=\"M10 18.4a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0M13.2 18.4v-5.2l3.8-1\" stroke=\"@HOT@\"/> </g> </svg>","folder-open":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M2.5 6.5h6.6l2 2.6H21.5v3.2H2.5z\" fill=\"@BG@\"/><path d=\"M2.5 12.1h19l-2 8.4H4.5z\" fill=\"@BG@\"/> </g> </svg>","folder-pictures":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M2.5 6.5h6.6l2 2.6H21.5V20.5H2.5z\" fill=\"@BG@\"/><path d=\"M7.5 13h9v6h-9z\" stroke=\"@DIM@\"/><path d=\"M7.5 17.4 10 15l2 1.7 2.1-2.2 2.4 2.6\" stroke=\"@HOT@\"/> </g> </svg>","folder-publicshare":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M2.5 6.5h6.6l2 2.6H21.5V20.5H2.5z\" fill=\"@BG@\"/><circle cx=\"12\" cy=\"16.2\" r=\"3.3\" stroke=\"@DIM@\"/><path d=\"M8.7 16.2h6.6M12 12.9c1.7 1.9 1.7 4.7 0 6.6-1.7-1.9-1.7-4.7 0-6.6\" stroke=\"@HOT@\"/> </g> </svg>","folder-recent":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M2.5 6.5h6.6l2 2.6H21.5V20.5H2.5z\" fill=\"@BG@\"/><circle cx=\"12\" cy=\"16\" r=\"3.3\" stroke=\"@DIM@\"/><path d=\"M12 13.8V16.2l1.7 1\" stroke=\"@HOT@\"/> </g> </svg>","folder-remote":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M2.5 6.5h6.6l2 2.6H21.5V20.5H2.5z\" fill=\"@BG@\"/><path d=\"M6.5 14.2c3.2-2.4 7.8-2.4 11 0M8.6 16.6c1.9-1.4 4.9-1.4 6.8 0\" stroke=\"@DIM@\"/><path d=\"M11.4 19.1h1.2\" stroke=\"@HOT@\"/> </g> </svg>","folder-saved-search":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M2.5 6.5h6.6l2 2.6H21.5V20.5H2.5z\" fill=\"@BG@\"/><circle cx=\"12\" cy=\"15.6\" r=\"2.7\" stroke=\"@HOT@\"/><path d=\"M14 17.6 16.6 20.2\" stroke=\"@HOT@\"/> </g> </svg>","folder-templates":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M2.5 6.5h6.6l2 2.6H21.5V20.5H2.5z\" fill=\"@BG@\"/><path d=\"M7.5 13.4h9v5.4h-9zM7.5 16.1h9M12 13.4v5.4\" stroke=\"@DIM@\"/> </g> </svg>","folder-videos":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M2.5 6.5h6.6l2 2.6H21.5V20.5H2.5z\" fill=\"@BG@\"/><path d=\"M7.5 13.4h9v5.4h-9z\" stroke=\"@DIM@\"/><path d=\"M11 14.8l3.2 1.4-3.2 1.5z\" fill=\"@HOT@\" stroke=\"none\"/> </g> </svg>","folder":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M2.5 6.5h6.6l2 2.6H21.5V20.5H2.5z\" fill=\"@BG@\"/><path d=\"M2.5 12.5h19\" stroke=\"@DIM@\"/> </g> </svg>","network-server":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M4.5 4.5h15v4.6h-15zM4.5 10.2h15v4.6h-15zM4.5 15.9h15v4.6h-15z\" fill=\"@BG@\"/><path d=\"M7 6.8h1.2M7 12.5h1.2M7 18.2h1.2\" stroke=\"@HOT@\"/> </g> </svg>","network-workgroup":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <circle cx=\"12\" cy=\"5.8\" r=\"2.6\" fill=\"@BG@\"/><circle cx=\"5.6\" cy=\"18\" r=\"2.6\" fill=\"@BG@\"/><circle cx=\"18.4\" cy=\"18\" r=\"2.6\" fill=\"@BG@\"/><path d=\"M10.4 7.4 7.2 15.7M13.6 7.4l3.2 8.3M8.2 18h7.6\" stroke=\"@DIM@\"/> </g> </svg>","user-desktop":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M2.5 5.5h19v11h-19z\" fill=\"@BG@\"/><path d=\"M8 20.5h8M12 16.5v4\" stroke=\"@DIM@\"/><path d=\"M5.5 8.5h6\" stroke=\"@HOT@\"/> </g> </svg>","user-home":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M12 3.4 21.5 11.2H18V20.5H6V11.2H2.5z\" fill=\"@BG@\"/><path d=\"M10 20.5v-5.4h4v5.4\" stroke=\"@DIM@\"/> </g> </svg>","user-trash-full":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M5.5 7.5h13M9.5 7.5V5.4h5V7.5M7 7.5l1 13h8l1-13z\" fill=\"@BG@\"/><path d=\"M7.7 12.4h8.6\" stroke=\"@HOT@\"/><path d=\"M10.5 14.4v4M13.5 14.4v4\" stroke=\"@DIM@\"/> </g> </svg>","user-trash":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M5.5 7.5h13M9.5 7.5V5.4h5V7.5M7 7.5l1 13h8l1-13z\" fill=\"@BG@\"/><path d=\"M10.5 11v6M13.5 11v6\" stroke=\"@DIM@\"/> </g> </svg>","application-pdf":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M5.5 2.5h8.5l4.5 4.5v14.5h-13z\" fill=\"@BG@\"/><path d=\"M14 2.5V7h4.5\" stroke=\"@DIM@\"/><path d=\"M8.4 18v-6h2.3a1.7 1.7 0 0 1 0 3.4H8.4M13.6 18v-6h1.6a2.3 2.3 0 0 1 0 6z\" stroke=\"@HOT@\"/> </g> </svg>","application-x-executable":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M4.5 4.5h15v15h-15z\" fill=\"@BG@\"/><path d=\"M7.5 14.6l3-2.9-3-2.9M12.6 14.9h4\" stroke=\"@HOT@\"/> </g> </svg>","application-x-generic":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M5.5 2.5h8.5l4.5 4.5v14.5h-13z\" fill=\"@BG@\"/><path d=\"M14 2.5V7h4.5\" stroke=\"@DIM@\"/><path d=\"M9 12h6v6H9z\" stroke=\"@DIM@\"/> </g> </svg>","audio-x-generic":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M5.5 2.5h8.5l4.5 4.5v14.5h-13z\" fill=\"@BG@\"/><path d=\"M14 2.5V7h4.5\" stroke=\"@DIM@\"/><path d=\"M8.6 17.4a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0M11.8 17.4v-5.6l4.2-1.1\" stroke=\"@HOT@\"/> </g> </svg>","font-x-generic":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M5.5 2.5h8.5l4.5 4.5v14.5h-13z\" fill=\"@BG@\"/><path d=\"M14 2.5V7h4.5\" stroke=\"@DIM@\"/><path d=\"M8 18.4l3.6-8.2 3.6 8.2M9.6 15.6h4\" stroke=\"@DIM@\"/> </g> </svg>","image-x-generic":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M5.5 2.5h8.5l4.5 4.5v14.5h-13z\" fill=\"@BG@\"/><path d=\"M14 2.5V7h4.5\" stroke=\"@DIM@\"/><path d=\"M7.5 12h9v7h-9z\" stroke=\"@DIM@\"/><path d=\"M7.5 17.2 10 14.8l2 1.7 2.1-2.2 2.4 2.5\" stroke=\"@HOT@\"/> </g> </svg>","package-x-generic":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M12 2.8 21 7.4v9.2L12 21.2 3 16.6V7.4z\" fill=\"@BG@\"/><path d=\"M3 7.4l9 4.6 9-4.6M12 12v9.2\" stroke=\"@DIM@\"/> </g> </svg>","text-html":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M5.5 2.5h8.5l4.5 4.5v14.5h-13z\" fill=\"@BG@\"/><path d=\"M14 2.5V7h4.5\" stroke=\"@DIM@\"/><path d=\"M10.4 11.8 8 15l2.4 3.2M13.6 11.8 16 15l-2.4 3.2\" stroke=\"@HOT@\"/> </g> </svg>","text-x-generic":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M5.5 2.5h8.5l4.5 4.5v14.5h-13z\" fill=\"@BG@\"/><path d=\"M14 2.5V7h4.5\" stroke=\"@DIM@\"/><path d=\"M8 11h8M8 14h8M8 17h5\" stroke=\"@DIM@\"/> </g> </svg>","text-x-script":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M5.5 2.5h8.5l4.5 4.5v14.5h-13z\" fill=\"@BG@\"/><path d=\"M14 2.5V7h4.5\" stroke=\"@DIM@\"/><path d=\"M9.5 17l2.2-2.2-2.2-2.2M13.2 17.4h3.2\" stroke=\"@HOT@\"/> </g> </svg>","video-x-generic":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M5.5 2.5h8.5l4.5 4.5v14.5h-13z\" fill=\"@BG@\"/><path d=\"M14 2.5V7h4.5\" stroke=\"@DIM@\"/><path d=\"M7.5 12.4h9v6h-9z\" stroke=\"@DIM@\"/><path d=\"M11 14l3.4 1.4-3.4 1.5z\" fill=\"@HOT@\" stroke=\"none\"/> </g> </svg>","emacs":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M3.5 3.5h17v17h-17z\" fill=\"@BG@\"/><circle cx=\"12\" cy=\"12\" r=\"6.6\" stroke=\"@DIM@\"/><path d=\"M8.8 9.4h6M8.8 12h4.6M8.8 14.6h6\" stroke=\"@HOT@\"/> </g> </svg>","firefox":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M3.5 3.5h17v17h-17z\" fill=\"@BG@\"/><circle cx=\"12\" cy=\"12\" r=\"6.6\" stroke=\"@DIM@\"/><path d=\"M5.4 12h13.2\" stroke=\"@DIM@\"/><path d=\"M12 5.4c2 2.4 2 11 0 13.2-2-2.2-2-10.8 0-13.2\" stroke=\"@HOT@\"/> </g> </svg>","libreoffice-calc":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M5.5 2.5h8.5l4.5 4.5v14.5h-13z\" fill=\"@BG@\"/><path d=\"M14 2.5V7h4.5\" stroke=\"@DIM@\"/><path d=\"M7.6 11h8.8v7.4H7.6z\" stroke=\"@DIM@\"/><path d=\"M7.6 13.4h8.8M7.6 16h8.8M11 11v7.4M14 11v7.4\" stroke=\"@HOT@\"/> </g> </svg>","libreoffice-draw":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M5.5 2.5h8.5l4.5 4.5v14.5h-13z\" fill=\"@BG@\"/><path d=\"M14 2.5V7h4.5\" stroke=\"@DIM@\"/><path d=\"M8 16.6l3-4.4 2.4 2.6 2.6-3.4\" stroke=\"@HOT@\"/> </g> </svg>","libreoffice-impress":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M5.5 2.5h8.5l4.5 4.5v14.5h-13z\" fill=\"@BG@\"/><path d=\"M14 2.5V7h4.5\" stroke=\"@DIM@\"/><path d=\"M7.6 11.4h8.8v6.2H7.6z\" stroke=\"@DIM@\"/><path d=\"M9.4 15.8l2-2.2 1.6 1.4 1.8-2.4\" stroke=\"@HOT@\"/> </g> </svg>","libreoffice-startcenter":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M3.5 3.5h17v17h-17z\" fill=\"@BG@\"/><path d=\"M6.5 5.5h11v13h-11z\" stroke=\"@DIM@\"/><path d=\"M8.6 8.4h6.8M8.6 11.4h6.8M8.6 14.4h4\" stroke=\"@HOT@\"/> </g> </svg>","libreoffice-writer":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M5.5 2.5h8.5l4.5 4.5v14.5h-13z\" fill=\"@BG@\"/><path d=\"M14 2.5V7h4.5\" stroke=\"@DIM@\"/><path d=\"M8 11.4h8M8 14h8M8 16.6h5\" stroke=\"@HOT@\"/> </g> </svg>","nvidia-settings":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M3.5 3.5h17v17h-17z\" fill=\"@BG@\"/><circle cx=\"12\" cy=\"12\" r=\"6.4\" stroke=\"@DIM@\"/><path d=\"M8.6 14.4c0-3.4 1.9-5.2 4.6-5.2 1.6 0 2.4.7 2.4 1.8 0 2.2-2.6 3.4-7 3.4\" stroke=\"@HOT@\"/> </g> </svg>","org.fedoraproject.MediaWriter":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M3.5 3.5h17v17h-17z\" fill=\"@BG@\"/><path d=\"M8.4 4.5h7.2v11h-7.2z\" stroke=\"@DIM@\"/><path d=\"M12 8v5M9.6 11l2.4 2.4 2.4-2.4\" stroke=\"@HOT@\"/><path d=\"M6.5 17.5h11v2h-11z\" stroke=\"@DIM@\"/> </g> </svg>","org.gnome.Boxes":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M3.5 3.5h17v17h-17z\" fill=\"@BG@\"/><path d=\"M12 5.6 18.4 9v6L12 18.4 5.6 15V9z\" stroke=\"@DIM@\"/><path d=\"M5.6 9 12 12.4 18.4 9M12 12.4v6\" stroke=\"@HOT@\"/> </g> </svg>","org.gnome.Calculator":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M3.5 3.5h17v17h-17z\" fill=\"@BG@\"/><path d=\"M6.5 4.5h11v15h-11z\" stroke=\"@DIM@\"/><path d=\"M8.4 7h7.2v3h-7.2z\" stroke=\"@HOT@\"/><path d=\"M9 12.6h1.4M14 12.6h1.4M9 15.6h1.4M14 15.6h1.4M11.6 12.6H13M11.6 15.6H13\" stroke=\"@DIM@\"/> </g> </svg>","org.gnome.Calendar":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M3.5 3.5h17v17h-17z\" fill=\"@BG@\"/><path d=\"M5.5 7.5h13v11h-13z\" stroke=\"@DIM@\"/><path d=\"M5.5 11h13M9 5.6v3.4M15 5.6v3.4\" stroke=\"@DIM@\"/><path d=\"M8 13.4h3v3h-3z\" fill=\"@HOT@\" stroke=\"none\"/> </g> </svg>","org.gnome.Characters":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M3.5 3.5h17v17h-17z\" fill=\"@BG@\"/><path d=\"M6.5 6.5h11v11h-11zM12 6.5v11M6.5 12h11\" stroke=\"@DIM@\"/><path d=\"M8.2 10.2h2M14 10.2h2M8.2 14.6h2M14 14.6h2\" stroke=\"@HOT@\"/> </g> </svg>","org.gnome.Contacts":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M3.5 3.5h17v17h-17z\" fill=\"@BG@\"/><circle cx=\"12\" cy=\"9.6\" r=\"2.8\" stroke=\"@DIM@\"/><path d=\"M6.8 18.4c0-2.9 2.3-4.4 5.2-4.4s5.2 1.5 5.2 4.4\" stroke=\"@HOT@\"/> </g> </svg>","org.gnome.Epiphany":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M3.5 3.5h17v17h-17z\" fill=\"@BG@\"/><circle cx=\"12\" cy=\"12\" r=\"6.6\" stroke=\"@DIM@\"/><path d=\"M5.4 12h13.2\" stroke=\"@DIM@\"/><path d=\"M12 5.4c2 2.4 2 11 0 13.2-2-2.2-2-10.8 0-13.2\" stroke=\"@HOT@\"/> </g> </svg>","org.gnome.Maps":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M3.5 3.5h17v17h-17z\" fill=\"@BG@\"/><path d=\"M4.5 7.5l5-2 5 2 5-2v11l-5 2-5-2-5 2z\" stroke=\"@DIM@\"/><path d=\"M9.5 5.5v11M14.5 7.5v11\" stroke=\"@DIM@\"/><circle cx=\"12\" cy=\"11\" r=\"1.6\" stroke=\"@HOT@\"/> </g> </svg>","org.gnome.Nautilus":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M3.5 3.5h17v17h-17z\" fill=\"@BG@\"/><path d=\"M4.5 6.5h15v12h-15z\" stroke=\"@DIM@\"/><path d=\"M4.5 9.5h15M9.4 9.5v9\" stroke=\"@DIM@\"/><path d=\"M11.4 12h6M11.4 15h4\" stroke=\"@HOT@\"/> </g> </svg>","org.gnome.Ptyxis":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M3.5 3.5h17v17h-17z\" fill=\"@BG@\"/><path d=\"M3.5 4.5h17v15h-17z\" stroke=\"@DIM@\"/><path d=\"M3.5 7.6h17\" stroke=\"@DIM@\"/><path d=\"M6.4 10.6l2.6 2.6-2.6 2.6M11.6 15.8h6\" stroke=\"@HOT@\"/> </g> </svg>","org.gnome.Snapshot":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M3.5 3.5h17v17h-17z\" fill=\"@BG@\"/><path d=\"M4.5 8.5h4l1.4-2h4.2l1.4 2h4v9h-15z\" stroke=\"@DIM@\"/><circle cx=\"12\" cy=\"13\" r=\"2.8\" stroke=\"@HOT@\"/> </g> </svg>","org.gnome.Software":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M3.5 3.5h17v17h-17z\" fill=\"@BG@\"/><path d=\"M5.5 8.5h13v10h-13z\" stroke=\"@DIM@\"/><path d=\"M9 8.5V6.4a3 3 0 0 1 6 0V8.5\" stroke=\"@HOT@\"/><path d=\"M9 13.4l2.4 2.4 4-4\" stroke=\"@HOT@\"/> </g> </svg>","org.gnome.TextEditor":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M5.5 2.5h8.5l4.5 4.5v14.5h-13z\" fill=\"@BG@\"/><path d=\"M14 2.5V7h4.5\" stroke=\"@DIM@\"/><path d=\"M8 11h8M8 14h8M8 17h5\" stroke=\"@DIM@\"/><path d=\"M13.6 18.4 18 14l1.8 1.8-4.4 4.4h-1.8z\" fill=\"@BG@\" stroke=\"@HOT@\"/> </g> </svg>","org.gnome.Totem":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M3.5 3.5h17v17h-17z\" fill=\"@BG@\"/><path d=\"M6.5 7.5h11v9h-11z\" stroke=\"@DIM@\"/><path d=\"M10.4 10.2l4.4 2.3-4.4 2.4z\" fill=\"@HOT@\" stroke=\"none\"/><path d=\"M6.5 7.5v9M17.5 7.5v9\" stroke=\"@HOT@\"/> </g> </svg>","org.gnome.Tour":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M3.5 3.5h17v17h-17z\" fill=\"@BG@\"/><circle cx=\"12\" cy=\"10\" r=\"4.4\" stroke=\"@DIM@\"/><path d=\"M9.4 13.6 8.6 19h6.8l-.8-5.4\" stroke=\"@HOT@\"/><path d=\"M12 5.6v8.8M7.8 9.4h8.4\" stroke=\"@DIM@\"/> </g> </svg>","org.gnome.Weather":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M3.5 3.5h17v17h-17z\" fill=\"@BG@\"/><path d=\"M7 13.5a3 3 0 0 1 .3-6 4.2 4.2 0 0 1 8 1.2 2.6 2.6 0 0 1-.4 5z\" stroke=\"@DIM@\"/><path d=\"M8.6 16.6l-1 2.4M12 16.6l-1 2.4M15.4 16.6l-1 2.4\" stroke=\"@HOT@\"/> </g> </svg>","org.gnome.clocks":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M3.5 3.5h17v17h-17z\" fill=\"@BG@\"/><circle cx=\"12\" cy=\"12\" r=\"6.4\" stroke=\"@DIM@\"/><path d=\"M12 8.2V12l3 1.8\" stroke=\"@HOT@\"/> </g> </svg>","preferences-system":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <circle cx=\"12\" cy=\"12\" r=\"8.6\" fill=\"@BG@\"/><circle cx=\"12\" cy=\"12\" r=\"3\" stroke=\"@HOT@\"/><path d=\"M12 3.4v2.8M12 17.8v2.8M3.4 12h2.8M17.8 12h2.8\" stroke=\"@DIM@\"/> </g> </svg>","simple-scan":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M3.5 3.5h17v17h-17z\" fill=\"@BG@\"/><path d=\"M5.5 6.5h13v6h-13z\" stroke=\"@DIM@\"/><path d=\"M7.4 15.4h9.2v4H7.4z\" stroke=\"@HOT@\"/><path d=\"M5.5 12.5h13\" stroke=\"@HOT@\"/> </g> </svg>","system-file-manager":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M2.5 4.5h19v15h-19z\" fill=\"@BG@\"/><path d=\"M2.5 7.6h19M8.6 7.6v11.9\" stroke=\"@DIM@\"/><path d=\"M11 10.6h8M11 13.6h8M11 16.6h5\" stroke=\"@HOT@\"/> </g> </svg>","utilities-terminal":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M2.5 4.5h19v15h-19z\" fill=\"@BG@\"/><path d=\"M2.5 7.6h19\" stroke=\"@DIM@\"/><path d=\"M6 10.4l2.6 2.6L6 15.6M11 15.6h6.5\" stroke=\"@HOT@\"/> </g> </svg>","web-browser":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <circle cx=\"12\" cy=\"12\" r=\"8.6\" fill=\"@BG@\"/><path d=\"M3.4 12h17.2M12 3.4c2.4 2.4 2.4 14.4 0 17.2-2.4-2.8-2.4-14.8 0-17.2\" stroke=\"@DIM@\"/> </g> </svg>","yelp":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"> <g fill=\"none\" stroke=\"@FG@\" stroke-width=\"1.4\" stroke-linecap=\"square\" stroke-linejoin=\"miter\"> <path d=\"M3.5 3.5h17v17h-17z\" fill=\"@BG@\"/><circle cx=\"12\" cy=\"12\" r=\"6.6\" stroke=\"@DIM@\"/><path d=\"M9.8 10a2.3 2.3 0 1 1 3 2.2v1.4\" stroke=\"@HOT@\"/><path d=\"M12.8 16.4h-1.6\" stroke=\"@HOT@\"/> </g> </svg>"};
+function icon(name, fg, dim, hot, bg) {
+  const s = ICONS[name] || ICONS['application-x-generic'];
+  return s.split('@FG@').join(fg).split('@DIM@').join(dim)
+          .split('@HOT@').join(hot).split('@BG@').join(bg);
+}
+const ICON_SHEET = [
+  'folder','folder-open','folder-documents','folder-download','folder-music',
+  'folder-pictures','folder-videos','folder-templates','folder-publicshare','folder-remote',
+  'folder-saved-search','folder-recent','user-home','user-desktop','user-trash',
+  'user-trash-full','drive-harddisk','drive-removable-media','drive-optical','network-server',
+  'network-workgroup','text-x-generic','text-x-script','application-x-generic','application-x-executable',
+  'image-x-generic','video-x-generic','audio-x-generic','package-x-generic','application-pdf',
+  'text-html','font-x-generic','system-file-manager','utilities-terminal','preferences-system',
+  'web-browser','emacs','firefox','libreoffice-calc','libreoffice-draw',
+  'libreoffice-impress','libreoffice-startcenter','libreoffice-writer','nvidia-settings','org.fedoraproject.MediaWriter',
+  'org.gnome.Boxes','org.gnome.Calculator','org.gnome.Calendar','org.gnome.Characters','org.gnome.Contacts',
+  'org.gnome.Epiphany','org.gnome.Maps','org.gnome.Nautilus','org.gnome.Ptyxis','org.gnome.Snapshot',
+  'org.gnome.Software','org.gnome.TextEditor','org.gnome.Totem','org.gnome.Tour','org.gnome.Weather',
+  'org.gnome.clocks','simple-scan','yelp'
+];
+
+const atabs = document.getElementById('atabs');
+const appstage = document.getElementById('appstage');
+const iconstage = document.getElementById('iconstage');
+const iconnote = document.getElementById('iconnote');
+
+function drawApps(p) {
+  const [name,note,bg,dim,fg,hot,glow,shipped,light] = p;
+  const R = ROLES[name.toLowerCase().split(' ')[0]];
+  const chrome = light ? 'rgba(255,255,255,.94)' : 'rgba(0,0,0,.9)';
+  const sunk = light ? 'rgba(0,0,0,.05)' : 'rgba(0,0,0,.45)';
+  const files = [
+    ['folder','bin', R.DIR, '—', '14 AUG'],
+    ['folder-documents','manifests', R.DIR, '—', '12 AUG'],
+    ['application-x-executable','run-diagnostics', R.EXEC, '18 KB', '24 AUG'],
+    ['text-x-generic','manifest.txt', R.FILE, '2.1 KB', '24 AUG'],
+    ['image-x-generic','schematic.png', R.MEDIA, '840 KB', '21 AUG'],
+    ['package-x-generic','archive.tar.gz', R.ARCH, '12 MB', '09 AUG'],
+    ['text-x-script','build.sh', R.EXEC, '900 B', '24 AUG'],
+    ['application-pdf','spec-3.1.pdf', R.FILE, '1.4 MB', '02 AUG']
+  ];
+  const places = [
+    ['user-home','Home'], ['folder-recent','Recent'], ['folder-saved-search','Starred'],
+    ['folder-documents','Documents'], ['folder-download','Downloads'], ['folder-music','Music'],
+    ['folder-pictures','Pictures'], ['user-trash','Trash']
+  ];
+  const panels = [
+    ['preferences-system','Appearance'], ['network-workgroup','Network'],
+    ['drive-harddisk','Disks'], ['utilities-terminal','Keyboard'], ['user-home','Users']
+  ];
+
+  appstage.innerHTML = `
+  <div class="mock" style="background:${light ? '#fff' : 'rgb(6,6,6)'};border-color:${dim};color:${fg}">
+    <div class="hb" style="background:${chrome};border-bottom-color:${dim};color:${fg}">
+      <span class="t">Files</span>
+      <span class="pb" style="border-color:${dim};background:${sunk}">
+        <span style="color:${dim}">HOME</span><span style="color:${dim}">VAR</span><span style="color:${hot}">LOG</span>
+      </span>
+      <span class="sp" style="color:${dim}">[⌕] [≡] [×]</span>
+    </div>
+    <div class="body">
+      <div class="sb" style="border-right-color:${dim};background:${sunk}">
+        <div class="hd" style="color:${R.META}">PLACES</div>
+        ${places.map((q,i) => i === 4
+          ? `<div class="it" style="background:${fg};color:${bg};border-left-color:${hot}">${icon(q[0],bg,bg,bg,fg)}<span>${q[1]}</span></div>`
+          : `<div class="it">${icon(q[0],fg,dim,hot,bg)}<span>${q[1]}</span></div>`).join('')}
+      </div>
+      <div>
+        <div class="ch" style="border-bottom-color:${dim};color:${R.META};background:${sunk}"><span>Name</span><span>Size</span><span>Modified</span></div>
+        ${files.map(([ic,n,col,sz,md],i) => i === 3
+          ? `<div class="fr" style="background:${fg};color:${bg}"><span class="nm">${icon(ic,bg,bg,bg,fg)}<b style="font-weight:400">${n}</b></span><span>${sz}</span><span>${md}</span></div>`
+          : `<div class="fr" style="${i % 2 ? (light ? 'background:rgba(0,0,0,.025)' : 'background:rgba(255,255,255,.02)') : ''}"><span class="nm">${icon(ic,fg,dim,hot,bg)}<b style="font-weight:400;color:${col}">${n}</b></span><span style="color:${dim}">${sz}</span><span style="color:${dim}">${md}</span></div>`).join('')}
+        <div class="fr" style="border-top:1px solid ${dim};color:${R.META};font-size:11px"><span class="nm" style="letter-spacing:.14em">8 ITEMS &middot; 1 SELECTED</span><span></span><span>14.4 MB</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mock" style="background:${light ? '#fff' : 'rgb(6,6,6)'};border-color:${dim};color:${fg}">
+    <div class="hb" style="background:${chrome};border-bottom-color:${dim};color:${fg}">
+      <span class="t">Settings — Appearance</span><span class="sp" style="color:${dim}">[×]</span>
+    </div>
+    <div class="body" style="grid-template-columns:132px 1fr">
+      <div class="sb" style="border-right-color:${dim};background:${sunk}">
+        ${panels.map((q,i) => i === 0
+          ? `<div class="it" style="background:${fg};color:${bg};border-left-color:${hot}">${icon(q[0],bg,bg,bg,fg)}<span>${q[1]}</span></div>`
+          : `<div class="it">${icon(q[0],fg,dim,hot,bg)}<span>${q[1]}</span></div>`).join('')}
+      </div>
+      <div>
+        <div class="grp" style="border-color:${dim};background:${sunk}">
+          <div class="prow" style="border-bottom-color:${dim}">
+            <span>CRT overlay<span class="sub" style="color:${R.META}">scanlines on terminals</span></span>
+            <span class="sw" style="border-color:${fg};background:${fg}"><i style="background:${bg};margin-left:18px"></i></span>
+          </div>
+          <div class="prow" style="border-bottom-color:${dim}">
+            <span>Panel wordmark<span class="sub" style="color:${R.META}">HELIOS-YUTANI</span></span>
+            <span class="sw" style="border-color:${dim};background:${light ? 'rgba(0,0,0,.06)' : 'rgba(0,0,0,.5)'}"><i style="background:${dim}"></i></span>
+          </div>
+          <div class="prow">
+            <span>Glow</span>
+            <span class="sc" style="border-color:${dim};background:${light ? 'rgba(0,0,0,.06)' : 'rgba(0,0,0,.5)'}"><i style="width:64%;background:${fg}"></i><b style="left:60%;background:${hot}"></b></span>
+          </div>
+        </div>
+        <div class="grp" style="border-color:${dim};background:${sunk}">
+          <div class="prow" style="border-bottom-color:${dim}"><span>Icon theme</span><span class="kc" style="border-color:${dim};color:${hot}">PTAI-${name.split(' ')[0]}</span></div>
+          <div class="prow"><span>Interface font</span><span class="kc" style="border-color:${dim};color:${hot}">Share Tech Mono 11</span></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  iconstage.style.borderColor = dim;
+  iconstage.style.background = bg;
+  iconstage.innerHTML = ICON_SHEET.map(n => `
+    <div class="ic" style="outline-color:${dim}">${icon(n,fg,dim,hot,bg)}<span style="color:${dim}">${n}</span></div>`).join('');
+  iconnote.innerHTML = `
+    <span style="color:${fg}">■ stroke @FG@</span>
+    <span style="color:${dim}">■ hairline @DIM@</span>
+    <span style="color:${hot}">■ accent @HOT@</span>
+    <span style="color:${R.META}">■ label @ROLE_META@</span>
+    <span style="color:${R.META}">63 drawn &middot; 75 aliased &middot; rest inherits Adwaita</span>`;
+}
+
+atabs.innerHTML = PRESETS.map((p,i) =>
+  `<button class="dtab" role="tab" aria-selected="${i===0}" data-i="${i}">${p[0]}</button>`).join('');
+atabs.addEventListener('click', e => {
+  const b = e.target.closest('.dtab');
+  if (!b) return;
+  atabs.querySelectorAll('.dtab').forEach(t => t.setAttribute('aria-selected', t === b));
+  drawApps(PRESETS[+b.dataset.i]);
+});
+drawApps(PRESETS[0]);
+
+</script>
+
+<script>
+// ---- candidate directions: full visual systems, docs-only ----
+const CAND = [{"k":"c1","n":"MU-TH-UR 6000","w":"Nostromo bridge","d":"Text-mode mainframe. No boxes — every block hangs off a horizontal rule. Cold blue-white at low chroma, wide tracking, big line-height.","bg":"#080b11","dim":"#4a607c","fg":"#dbe6f2","hot":"#ffffff","light":0,"df":"Micro 5","mf":"Azeret Mono","ch":"underline","dens":"airy","scan":[0.16,4],"glow":14,"roles":{"DIR":"#cde0f5","EXEC":"#ffad90","LINK":"#e6a7eb","FILE":"#91bff0","MEDIA":"#3cd7d0","ARCH":"#a4a4ff","DEV":"#e2c071","META":"#7193b6"},"m":{"fg":15.6,"dim":3.1,"hot":19.7,"role":6.1,"sep":32,"lab":4.6},"lab":"#657c99"},{"k":"c2","n":"SULACO","w":"Sulaco hardware","d":"Military rack panel. Olive drab on gun-charcoal, 3px double rules, tightest density of the ten — meant to look bolted together.","bg":"#14150e","dim":"#63683c","fg":"#cbd19a","hot":"#f2f4d8","light":0,"df":"Workbench","mf":"Kode Mono","ch":"double","dens":"tight","scan":[0.3,3],"glow":10,"roles":{"DIR":"#dee2bd","EXEC":"#4ecaff","LINK":"#23daa1","FILE":"#b8c060","MEDIA":"#ff8092","ARCH":"#3dd15e","DEV":"#bfabff","META":"#868c41"},"m":{"fg":11.5,"dim":3.1,"hot":16.4,"role":5.1,"sep":34,"lab":4.7},"lab":"#7f8457"},{"k":"c3","n":"TAC OVERLAY","w":"Marine tac display","d":"Helmet-cam HUD. Chartreuse signal, notched corners cut off every panel, dense stacked readout, hardest scanline of the ten.","bg":"#080a04","dim":"#5c7016","fg":"#c8f03c","hot":"#eeffb0","light":0,"df":"Saira Stencil One","mf":"VT323","ch":"notch","dens":"tight","scan":[0.34,3],"glow":20,"roles":{"DIR":"#deecbf","EXEC":"#c3b0ff","LINK":"#ff9f00","FILE":"#afcc5e","MEDIA":"#ff749e","ARCH":"#00e46c","DEV":"#f4a1ff","META":"#7e9343"},"m":{"fg":15.1,"dim":3.6,"hot":18.5,"role":5.8,"sep":32,"lab":4.6},"lab":"#6d822c"},{"k":"c4","n":"HADLEY OPS","w":"Hadley's Hope colony ops","d":"Sodium-vapour floodlight on wet concrete. No outlines anywhere — panels are solid blocks separated by gaps, headers filled flat.","bg":"#151010","dim":"#83584b","fg":"#f0a893","hot":"#ffd9cc","light":0,"df":"Jersey 10","mf":"Spline Sans Mono","ch":"fill","dens":"airy","scan":[0.2,4],"glow":16,"roles":{"DIR":"#ffd7ca","EXEC":"#4cdaab","LINK":"#fe93e3","FILE":"#f49e85","MEDIA":"#4cc1ff","ARCH":"#ff6e93","DEV":"#00daec","META":"#b87562"},"m":{"fg":9.6,"dim":3.1,"hot":14.4,"role":5.2,"sep":26,"lab":4.7},"lab":"#a17466"},{"k":"c5","n":"MEDLAB","w":"Medlab bio-scan","d":"Clinical light mode. Cool white ground, teal-ink type, one hairline at half opacity, the airiest of the set.","bg":"#eef2f3","dim":"#728d93","fg":"#123a42","hot":"#000d12","light":1,"df":"Major Mono Display","mf":"Syne Mono","ch":"hairline","dens":"airy","scan":[0.05,4],"glow":0,"roles":{"DIR":"#00414d","EXEC":"#93285c","LINK":"#496000","FILE":"#006a83","MEDIA":"#006f44","ARCH":"#004fb7","DEV":"#963400","META":"#0c788a"},"m":{"fg":10.9,"dim":3.1,"hot":17.5,"role":4.6,"sep":30,"lab":4.6},"lab":"#587278"},{"k":"c6","n":"TOW MANIFEST","w":"Cargo & tow manifest","d":"Continuous-feed dot matrix. Pulp-grey stock, blue ribbon ink, a heavy left rail down every block like a tractor-feed margin.","bg":"#d9d5c9","dim":"#6c7488","fg":"#1e2a4a","hot":"#080e22","light":1,"df":"Bungee","mf":"Reddit Mono","ch":"rail","dens":"normal","scan":[0.06,3],"glow":0,"roles":{"DIR":"#1e2c51","EXEC":"#912d00","LINK":"#980a5e","FILE":"#3752a0","MEDIA":"#006383","ARCH":"#6400b5","DEV":"#655200","META":"#45598e"},"m":{"fg":9.6,"dim":3.2,"hot":13.1,"role":4.6,"sep":32,"lab":4.6},"lab":"#545c6f"},{"k":"c7","n":"CRYO LOOP","w":"Hypersleep / life support","d":"Life-support standby. Periwinkle on blue-black, 2px hard borders, generous padding, slowest bloom — legible across a dark room.","bg":"#060a15","dim":"#4c5e94","fg":"#b9c9ff","hot":"#eaefff","light":0,"df":"Zen Dots","mf":"Anonymous Pro","ch":"heavy","dens":"airy","scan":[0.18,4],"glow":22,"roles":{"DIR":"#d8e0fd","EXEC":"#edb755","LINK":"#ff95af","FILE":"#a4b7fb","MEDIA":"#00d0ff","ARCH":"#df8fff","DEV":"#b5d265","META":"#7b89bd"},"m":{"fg":12.1,"dim":3.1,"hot":17.2,"role":5.8,"sep":40,"lab":4.6},"lab":"#6578b0"},{"k":"c8","n":"CORPORATE SEAL","w":"Corporate boardroom","d":"Letterhead, not a screen. Buff bond stock, oxblood ink, every panel titled by an inverted block — no glow, no visible frame.","bg":"#e3d9c3","dim":"#8a7358","fg":"#3a2418","hot":"#170905","light":1,"df":"Big Shoulders Stencil Display","mf":"Martian Mono","ch":"inv","dens":"airy","scan":[0.04,5],"glow":0,"roles":{"DIR":"#482612","EXEC":"#006b68","LINK":"#902063","FILE":"#8a4518","MEDIA":"#124aae","ARCH":"#823a00","DEV":"#006592","META":"#865336"},"m":{"fg":10.4,"dim":3.2,"hot":13.9,"role":4.5,"sep":34,"lab":4.6},"lab":"#715b41"},{"k":"c9","n":"ORDNANCE","w":"Weapons & ordnance","d":"Armoury inventory. Crimson-rose on near-black, dashed rules throughout, tightest tracking of the ten.","bg":"#0d0406","dim":"#9c3f4d","fg":"#ff657d","hot":"#ffc6d1","light":0,"df":"Syncopate","mf":"Nova Mono","ch":"dash","dens":"normal","scan":[0.26,3],"glow":18,"roles":{"DIR":"#ffd4d7","EXEC":"#88d56c","LINK":"#fba700","FILE":"#ff939e","MEDIA":"#00d5f9","ARCH":"#ca8fff","DEV":"#25dda6","META":"#ba6c74"},"m":{"fg":7.1,"dim":3.1,"hot":13.7,"role":5.3,"sep":62,"lab":4.6},"lab":"#ba5a66"},{"k":"c10","n":"DERELICT","w":"Salvage / derelict","d":"Bronze corrosion. Sepia phosphor gone brown, corner brackets instead of frames, uneven scanline — the one that looks decades old.","bg":"#100c07","dim":"#765b3d","fg":"#bd9666","hot":"#e9d5b1","light":0,"df":"Chakra Petch","mf":"Fragment Mono","ch":"bracket","dens":"normal","scan":[0.28,3],"glow":12,"roles":{"DIR":"#f3d9bb","EXEC":"#00cff1","LINK":"#88aeff","FILE":"#e0a454","MEDIA":"#00d49a","ARCH":"#cea800","DEV":"#e493f7","META":"#a57a43"},"m":{"fg":7.2,"dim":3.1,"hot":13.6,"role":5.1,"sep":26,"lab":4.7},"lab":"#937758"}];
+// per-direction panel furniture — the words the chrome carries
+const FUR = {
+  c1:  ['MU/TH/UR 6000', 'INTERROGATE', 'SESSION', 'DIRECTORY'],
+  c2:  ['USS SULACO',    'AUTH',        'STATUS',  'VOLUME'],
+  c3:  ['TAC-NET 04',    'IDENT',       'FEED',    'CACHE'],
+  c4:  ['HADLEY OPS',    'BADGE',       'SHIFT LOG','STORES'],
+  c5:  ['MEDLAB 3',      'PATIENT',     'SCAN LOG','SAMPLES'],
+  c6:  ['TOW MANIFEST',  'SIGNATORY',   'LOG ENTRY','CARGO'],
+  c7:  ['LIFE SUPPORT',  'OCCUPANT',    'LOOP',    'BAY'],
+  c8:  ['WEYLAND-YUTANI','AUTHORISED BY','MEMORANDUM','ENCLOSURES'],
+  c9:  ['ARMOURY 12',    'CUSTODIAN',   'DRAW LOG','RACK'],
+  c10: ['SALVAGE 6',     'CLAIMANT',    'SURVEY',  'HOLD']
+};
+const FALLBACK = { 'Big Shoulders Stencil Display': "'Big Shoulders Stencil'," };
+// optical size correction per display face — Micro 5 draws on a 5px body, Bungee on a 40px one
+const DSC = { 'Micro 5': 2.6, 'Workbench': 1.05, 'Saira Stencil One': 1, 'Jersey 10': 1.5,
+  'Major Mono Display': .95, 'Bungee': .8, 'Zen Dots': .85, 'Big Shoulders Stencil Display': 1.55,
+  'Syncopate': .8, 'Chakra Petch': 1.1 };
+const CSPARK = { CPU: [22,31,26,44,52,38,29,35,61,72,48,46], MEM: [55,56,56,58,57,59,60,60,61,61,62,63], NET: [9,38,96,124,55,21,12,6,18,44,88,31], TEMP: [43,46,48,47,49,52,54,53,55,54,56,54] };
+const CGAUGE = [['CPU','46%','CPU'],['MEM','63%','MEM']];
+const rgba = (hx, a) => { const n = hx.replace('#',''); const v = [0,2,4].map(i => parseInt(n.slice(i,i+2),16)); return `rgba(${v.join(',')},${a})`; };
+const sparkBars = k => CSPARK[k].map(v => {
+  const top = k === 'NET' ? Math.max(...CSPARK.NET) : 100;
+  return `<i style="height:${Math.max(1, Math.round(v / top * 11))}px"></i>`;
+}).join('');
+
+document.getElementById('cands').innerHTML = CAND.map(c => {
+  const f = FUR[c.k], R = c.roles;
+  const df = `'${c.df}',${FALLBACK[c.df] || ''}'Silkscreen',monospace`;
+  const vars = [
+    `--cbg:${c.bg}`, `--cfg:${c.fg}`, `--cdim:${c.dim}`, `--chot:${c.hot}`,
+    `--clab:${c.lab}`, `--cdimA:${rgba(c.dim, .5)}`, `--glowc:${rgba(c.fg, c.light ? 0 : .55)}`, `--gl:${c.glow}px`,
+    `--scanA:${c.scan[0]}`, `--scanP:${c.scan[1]}px`,
+    `--df:${df}`, `--mf:'${c.mf}',ui-monospace,monospace`, `--dsc:${DSC[c.df] || 1}`, `--dscg:${Math.max(1, Math.min(DSC[c.df] || 1, 1.5))}`
+  ].join(';');
+  const met = [
+    ['FG : BG', c.m.fg, '\u2265 7.0', c.m.fg >= 7],
+    ['DIM : BG', c.m.dim, '\u2265 3.0', c.m.dim >= 3],
+    ['HOT : BG', c.m.hot, '\u2265 7.5', c.m.hot >= 7.5],
+    ['ROLE MIN', c.m.role, '\u2265 4.5', c.m.role >= 4.5],
+    ['HUE SEP', c.m.sep + '\u00b0', '\u2265 25\u00b0', c.m.sep >= 25],
+    ['LABEL : BG', c.m.lab, '\u2265 4.5', c.m.lab >= 4.5]
+  ];
+  return `
+  <article class="cand">
+    <div class="chead">
+      <span class="ck" style="color:${c.fg};border-color:${c.dim}">${c.k.toUpperCase()}</span>
+      <span class="cn" style="color:${c.light ? c.dim : c.fg}">${c.n}</span>
+      <span class="cw">${c.w}${c.light ? ' &middot; light' : ''}</span>
+    </div>
+    <p class="cdesc">${c.d}</p>
+    <div class="cspec"><span>${c.df} / ${c.mf}</span><span>${c.ch} chrome</span><span>${c.dens}</span></div>
+    <div class="cramp">${[c.bg, c.dim, c.fg, c.hot].map(v => `<div style="background:${v}"></div>`).join('')}</div>
+    <div class="croles">${Object.values(R).map(v => `<div style="background:${v}"></div>`).join('')}</div>
+    <div class="csurf ch-${c.ch} d-${c.dens}" style="${vars}">
+      <div class="cbar">
+        <span class="org">${f[0]}</span>
+        <span class="chip">PTAI</span>
+        <span class="clk">08:24</span>
+        <span class="gg">${CGAUGE.map(([l, v, k]) => `
+          <span class="gu"><span class="gl">${l}</span><span class="gv">${v}</span><span class="gs">${sparkBars(k)}</span></span>`).join('')}</span>
+        <span class="ind">[PWR]</span>
+      </div>
+      <div class="cblk cauth">
+        <span class="bh">${f[1]}</span>
+        <div class="u">NUKRA</div>
+        <div class="p">PASSWORD</div>
+        <div class="e">\u2022\u2022\u2022\u2022\u2022\u2022\u2022<span class="caret">_</span></div>
+      </div>
+      <div class="cblk cterm">
+        <span class="bh">${f[2]}</span>
+        <div class="m">[nukra@ptai][~]</div>
+        <div class="q">&gt;CMD:/ <b>ptai-theme status</b></div>
+        <div class="o">preset ${c.k} &middot; crt normal &middot; greeter themed</div>
+      </div>
+      <div class="cblk cterm">
+        <span class="bh">${f[3]}</span>
+        <div class="q">&gt;CMD:/ <b>ls -F</b></div>
+        <div class="cls">
+          <span style="color:${R.DIR}">bin/</span>
+          <span style="color:${R.EXEC}">run-diagnostics*</span>
+          <span style="color:${R.LINK}">latest@ &rarr; v2</span>
+          <span style="color:${R.FILE}">manifest.txt</span>
+          <span style="color:${R.MEDIA}">schematic.png</span>
+          <span style="color:${R.ARCH}">archive.tar.gz</span>
+          <span style="color:${R.DEV}">ttyS0</span>
+          <span style="color:${R.META}">session.log</span>
+        </div>
+      </div>
+    </div>
+    <div class="cmet">${met.map(([k, v, fl, ok]) => `
+      <div><span class="mk">${k}</span><span class="mv" style="color:${ok ? c.fg : '#ff5c3c'}">${v} ${ok ? '\u2713' : '\u2717'}</span><span class="mf">${fl}</span></div>`).join('')}</div>
+  </article>`;
+}).join('');
+</script>
+</body>
+</html>

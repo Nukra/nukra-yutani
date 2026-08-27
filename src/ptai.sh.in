@@ -1,0 +1,364 @@
+# PTAI @NAME@ — shell prompt and login banner. Sourced from ~/.bashrc via ptai-theme.
+# Remove the source line in ~/.bashrc to disable.
+
+__ptai_fg=$'\e[@ANSIFG@m'
+__ptai_dim=$'\e[@ANSIDIM@m'
+__ptai_hot=$'\e[@ANSIHOT@m'
+__ptai_off=$'\e[0m'
+
+__ptai_c_fg='\[\e[@ANSIFG@m\]'
+__ptai_c_dim='\[\e[@ANSIDIM@m\]'
+__ptai_c_hot='\[\e[@ANSIHOT@m\]'
+__ptai_c_off='\[\e[0m\]'
+
+# ---- banner: the GDM boot sequence, reproduced on every new terminal ----
+#   PTAI_BANNER=0        skip it
+#   PTAI_BANNER_DELAY=0  print instantly (default 0.004 s per character)
+: "${PTAI_BANNER:=1}"
+: "${PTAI_BANNER_DELAY:=0.004}"
+
+# Type one line out character by character, then newline.
+# $1 = colour escape, $2 = text
+__ptai_type() {
+  local color="$1" text="$2" i ch
+  printf '%s' "$color"
+  if [ "$PTAI_BANNER_DELAY" = "0" ]; then
+    printf '%s' "$text"
+  else
+    for ((i = 0; i < ${#text}; i++)); do
+      ch="${text:i:1}"
+      printf '%s' "$ch"
+      sleep "$PTAI_BANNER_DELAY" 2>/dev/null || true
+    done
+  fi
+  printf '%s\n' "$__ptai_off"
+}
+
+# Full-width lines print instantly regardless — typing 72 asterisks is tedious.
+__ptai_rule() {
+  local w="${COLUMNS:-72}" s=""
+  [ "$w" -gt 72 ] && w=72
+  while [ "${#s}" -lt "$w" ]; do s="$s*"; done
+  printf '%s%s%s\n' "$__ptai_dim" "$s" "$__ptai_off"
+}
+
+__ptai_banner() {
+  local user_id host up
+  user_id="$(printf '%s' "${USER:-operator}" | tr '[:lower:]' '[:upper:]')"
+  host="$(hostname -s 2>/dev/null || echo ptai)"
+  up="$(uptime -p 2>/dev/null | sed 's/^up //' || echo unknown)"
+
+  printf '\n'
+  __ptai_rule
+  __ptai_type "$__ptai_hot" "  @ORG@"
+  __ptai_type "$__ptai_fg"  "  PERSONAL-TERMINAL-ACCESS-INTERFACE"
+  __ptai_rule
+  printf '\n'
+  __ptai_type "$__ptai_dim" "[ACCESSING PTAI SYSTEM...]"
+  __ptai_type "$__ptai_dim" "[LOADING USER PROFILE...]"
+  __ptai_type "$__ptai_fg"  "[AUTHENTICATION SUCCESSFUL]"
+  printf '\n'
+  __ptai_type "$__ptai_hot" "Welcome, USER: [${user_id}]"
+  __ptai_type "$__ptai_dim" "NODE: ${host}  /  SESSION UPTIME: ${up}"
+  printf '\n'
+  __ptai_type "$__ptai_fg"  ">WYC REMINDER: SAFETY SECOND! PROFIT FIRST!"
+  __ptai_type "$__ptai_dim" "[00]D [00]H [00]M [19]S since last accident"
+  printf '\n'
+  __ptai_type "$__ptai_fg"  ">ACCESS ACCEPTED"
+  __ptai_type "$__ptai_fg"  ">[DISPLAYING LOCAL QUICK ACCESS:///]"
+  printf '\n'
+}
+
+# Ctrl-C during the reveal skips to the prompt instead of killing the shell.
+__ptai_banner_guarded() {
+  trap 'PTAI_BANNER_DELAY=0' INT
+  __ptai_banner
+  trap - INT
+}
+
+case $- in
+  *i*)
+    if [ "$PTAI_BANNER" = "1" ] && [ -z "${PTAI_BANNER_SHOWN:-}" ]; then
+      __ptai_banner_guarded
+      export PTAI_BANNER_SHOWN=1
+    fi
+    ;;
+esac
+
+# ---- reveal effect for ordinary commands ----
+# The banner's character-by-character reveal, applied to what you type and to
+# what commands print back.
+#
+#   PTAI_TYPE=1|0        master switch (default 1)
+#   PTAI_TYPE_ECHO=1|0   type back the command you entered (default 0)
+#   PTAI_TYPE_DELAY      seconds per character for output (default 0.0022)
+#   PTAI_TYPE_BUDGET     seconds of reveal per command before it dumps the
+#                        remainder instantly (default 2.5)
+#
+# Commands are only piped through the filter when stdout is this terminal and
+# the command is not interactive — editors, pagers, TUIs and anything reading
+# stdin must keep the raw tty, so they are passed through untouched.
+
+__ptai_typer="$HOME/.local/share/ptai-theme/ptai-type"
+: "${PTAI_TYPE:=1}"
+: "${PTAI_TYPE_ECHO:=0}"
+: "${PTAI_TYPE_DELAY:=0.0022}"
+: "${PTAI_TYPE_BUDGET:=2.5}"
+export PTAI_TYPE_DELAY PTAI_TYPE_BUDGET
+
+# Commands that own the terminal and must never be filtered.
+__ptai_type_raw='vi|vim|nvim|nano|emacs|micro|helix|hx|less|more|most|man|bat|top|htop|btop|btm|glances|iotop|watch|tmux|screen|ssh|mosh|telnet|ftp|sftp|scp|rsync|gdb|lldb|python|python3|ipython|node|irb|psql|mysql|sqlite3|redis-cli|mc|ranger|nnn|lf|yazi|fzf|dialog|whiptail|clear|reset|tput|sudoedit|visudo|crontab|passwd|su|sudo|ptyxis|gnome-terminal|alacritty|kitty|dnf|rpm-ostree|systemctl|journalctl|git'
+
+# crt CMD...  — force the reveal on a command that is skipped by default.
+crt() { "$@" 2>&1 | "$__ptai_typer"; }
+
+# raw CMD...  — force a command past the reveal.
+raw() { PTAI_TYPE=0 "$@"; }
+
+__ptai_should_type() {
+  [ "$PTAI_TYPE" = "1" ] || return 1
+  [ -x "$__ptai_typer" ] || return 1
+  [ -t 1 ] || return 1
+  local first="${1%% *}"
+  first="${first##*/}"
+  case "$first" in
+    ''|crt|raw|exit|logout|cd|source|.) return 1 ;;
+    _*|__*) return 1 ;;
+  esac
+  [[ "$first" =~ ^($__ptai_type_raw)$ ]] && return 1
+  # anything already redirected, piped or backgrounded keeps its own plumbing
+  case "$1" in
+    *'|'*|*'>'*|*'<'*|*'&'*) return 1 ;;
+  esac
+  return 0
+}
+
+# Type the entered command back as a dim >EXEC: line, slightly slower than the
+# output reveal so it reads as a keystroke echo.
+__ptai_echo_cmd() {
+  local saved="$PTAI_BANNER_DELAY"
+  PTAI_BANNER_DELAY=0.006
+  __ptai_type "$__ptai_dim" ">EXEC: $1"
+  PTAI_BANNER_DELAY="$saved"
+}
+
+# The reveal is applied by rewriting the command line before bash runs it.
+# extdebug lets the DEBUG trap cancel the original and run the piped form.
+#
+# The trap fires for EVERY command bash runs, including each entry of
+# PROMPT_COMMAND (vte, systemd and terminal title hooks). So it is armed once
+# per prompt — by the last PROMPT_COMMAND entry — and disarms itself the moment
+# it fires, which leaves exactly the line you typed.
+# Arming must be the last hook to run each prompt. Anything appended after it
+# becomes the command the DEBUG trap sees, which disarms the trap and swallows
+# the reveal — so other per-prompt work belongs inside this function, not in a
+# separate PROMPT_COMMAND entry.
+__ptai_arm() {
+  declare -F __ptai_lsguard >/dev/null && __ptai_lsguard
+  __ptai_armed=1
+}
+
+__ptai_debug() {
+  [ "${__ptai_armed:-}" = "1" ] || return 0
+  # Readline completion runs commands (and completion functions) before you
+  # press Enter. Stay armed and stay out of the way, or the reveal eats the
+  # completion's output and garbles the line being edited.
+  [ -n "${COMP_LINE:-}${COMP_POINT:-}${READLINE_LINE:-}" ] && return 0
+  case "$BASH_COMMAND" in
+    _*|__*|*compgen*|*complete\ *|*COMPREPLY*) return 0 ;;
+  esac
+  __ptai_armed=
+  local cmd="$BASH_COMMAND"
+  __ptai_should_type "$cmd" || return 0
+  if [ "$PTAI_TYPE_ECHO" = "1" ]; then
+    __ptai_echo_cmd "$cmd"
+  fi
+  # The reveal runs the command into a pipe, so every tool using --color=auto
+  # sees "not a terminal" and drops its colour. ls -la then looks uncoloured
+  # while LS_COLORS is perfectly correct. Force colour for the duration: the
+  # aliases below expand this variable at execution time, not at alias time.
+  __ptai_lscolor=always
+  eval "{ $cmd ; } 2>&1 | \"\$__ptai_typer\""
+  __ptai_lscolor=auto
+  return 1
+}
+
+__ptai_type_enable() {
+  shopt -s extdebug
+  trap '__ptai_debug' DEBUG
+  __ptai_arm
+}
+__ptai_type_disable() {
+  trap - DEBUG
+  shopt -u extdebug
+  __ptai_armed=
+}
+
+# ptai-type on | off | fast | slow | STATUS
+ptai-type() {
+  case "${1:-status}" in
+    on)    PTAI_TYPE=1; __ptai_type_enable;  printf '%s>REVEAL ENABLED%s\n'  "$__ptai_fg"  "$__ptai_off" ;;
+    off)   PTAI_TYPE=0; __ptai_type_disable; printf '%s>REVEAL DISABLED%s\n' "$__ptai_dim" "$__ptai_off" ;;
+    echo)  PTAI_TYPE_ECHO=$(( 1 - PTAI_TYPE_ECHO )); printf '%s>COMMAND ECHO: %s%s\n' "$__ptai_dim" "$PTAI_TYPE_ECHO" "$__ptai_off" ;;
+    fast)  export PTAI_TYPE_DELAY=0.0008 PTAI_TYPE_BUDGET=1.2 ;;
+    slow)  export PTAI_TYPE_DELAY=0.006  PTAI_TYPE_BUDGET=6 ;;
+    normal) export PTAI_TYPE_DELAY=0.0022 PTAI_TYPE_BUDGET=2.5 ;;
+    [0-9]*|.[0-9]*) export PTAI_TYPE_DELAY="$1" ;;
+    status|*)
+      printf '%s reveal=%s echo=%s delay=%ss budget=%ss%s\n' \
+        "$__ptai_dim" "$PTAI_TYPE" "$PTAI_TYPE_ECHO" \
+        "$PTAI_TYPE_DELAY" "$PTAI_TYPE_BUDGET" "$__ptai_off" ;;
+  esac
+}
+
+# Arm last, so every other prompt hook has already run by the time we listen.
+# PROMPT_COMMAND is an array on bash 5.1+ (Fedora's /etc/bashrc uses one).
+__ptai_armed=
+if [ "${BASH_VERSINFO[0]}" -gt 5 ] || { [ "${BASH_VERSINFO[0]}" -eq 5 ] && [ "${BASH_VERSINFO[1]}" -ge 1 ]; }; then
+  PROMPT_COMMAND+=('__ptai_arm')
+else
+  PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND; }__ptai_arm"
+fi
+
+case $- in
+  *i*) [ "$PTAI_TYPE" = "1" ] && [ -x "$__ptai_typer" ] && __ptai_type_enable ;;
+esac
+
+PS1="${__ptai_c_dim}[${__ptai_c_fg}\u@ptai${__ptai_c_dim}][${__ptai_c_fg}\w${__ptai_c_dim}]\n${__ptai_c_hot}>CMD:/${__ptai_c_off} "
+PS2="${__ptai_c_dim}...${__ptai_c_off} "
+
+export LESS_TERMCAP_md=$'\e[@ANSIHOT@m'
+export LESS_TERMCAP_us=$'\e[@ANSIFG@m'
+export LESS_TERMCAP_ue=$'\e[0m'
+export LESS_TERMCAP_me=$'\e[0m'
+export SYSTEMD_COLORS=1
+
+# ---- ls / grep colours, derived from the preset ramp ----
+# LS_COLORS wants SGR fragments, the preset gives hex; convert once at source
+# time so a preset switch is the only thing that has to change.
+__ptai_sgr() { local h="${1#\#}"; printf '38;2;%d;%d;%d' "0x${h:0:2}" "0x${h:2:2}" "0x${h:4:2}"; }
+__ptai_bgr() { local h="${1#\#}"; printf '48;2;%d;%d;%d' "0x${h:0:2}" "0x${h:2:2}" "0x${h:4:2}"; }
+
+# Each class gets its own ramp entry rather than a slice of one gradient: the
+# preset generates them spread across hue and lightness so no two classes read
+# alike, and the SGR attribute is a second, colour-blind-safe channel.
+__ptai_dirc="$(__ptai_sgr '@ROLE_DIR@');1"          # directories: bold
+__ptai_filec="$(__ptai_sgr '@ROLE_FILE@')"          # regular files: plain
+__ptai_linkc="$(__ptai_sgr '@ROLE_LINK@');4"        # symlinks: underlined
+__ptai_execc="$(__ptai_sgr '@ROLE_EXEC@');1"        # executables: bold
+__ptai_archc="$(__ptai_sgr '@ROLE_ARCH@');1"        # archives: bold
+__ptai_mediac="$(__ptai_sgr '@ROLE_MEDIA@');3"      # media: italic
+# /dev is nothing but device nodes, so collapsing bd/cd/pi/so into one class
+# makes the busiest directory on the system read as a single colour. Each node
+# type gets its own existing role colour instead: the classes never co-occur
+# (a directory listing has no device nodes; /dev has no archives or media), so
+# reuse costs nothing and every preset already contrast-checks these.
+__ptai_devbc="$(__ptai_sgr '@ROLE_DEV@');1"         # block devices: bold
+__ptai_devcc="$(__ptai_sgr '@ROLE_ARCH@');1"        # char devices: bold
+__ptai_pipec="$(__ptai_sgr '@ROLE_MEDIA@');1"       # named pipes
+__ptai_sockc="$(__ptai_sgr '@ROLE_LINK@');1"        # sockets
+__ptai_doorc="$(__ptai_sgr '@ROLE_EXEC@');1"        # doors
+__ptai_metac="$(__ptai_sgr '@ROLE_META@');3"        # logs, backups, noise: italic
+__ptai_warnc="$(__ptai_bgr '@ROLE_ARCH@');$(__ptai_sgr '@BG@');1;7"  # broken / setuid: reverse
+
+__ptai_lsc="rs=0:no=${__ptai_filec}:fi=${__ptai_filec}:di=${__ptai_dirc}"
+__ptai_lsc+=":ln=${__ptai_linkc}:mh=${__ptai_linkc}:or=${__ptai_warnc}:mi=${__ptai_warnc}"
+__ptai_lsc+=":ex=${__ptai_execc}:pi=${__ptai_pipec}:so=${__ptai_sockc}:do=${__ptai_doorc}"
+__ptai_lsc+=":bd=${__ptai_devbc}:cd=${__ptai_devcc}"
+__ptai_lsc+=":su=${__ptai_warnc}:sg=${__ptai_warnc}:ca=${__ptai_warnc}"
+__ptai_lsc+=":tw=${__ptai_dirc};4:ow=${__ptai_dirc};4:st=${__ptai_dirc}"
+for __e in tar tgz txz tbz zip gz bz2 xz zst 7z rar deb rpm iso img; do
+  __ptai_lsc+=":*.$__e=${__ptai_archc}"
+done
+for __e in png jpg jpeg gif bmp webp avif svg tif tiff ico xcf psd \
+           mp3 flac ogg opus wav m4a mp4 mkv webm mov avi; do
+  __ptai_lsc+=":*.$__e=${__ptai_mediac}"
+done
+for __e in log bak old orig swp swo tmp part pyc o so a; do
+  __ptai_lsc+=":*.$__e=${__ptai_metac}"
+done
+unset __e
+export LS_COLORS="$__ptai_lsc"
+export EZA_COLORS="$__ptai_lsc"
+
+# Stamp of the preset this shell sourced. A running shell keeps whatever it read
+# at login, so after a preset switch or a role-colour edit the environment is a
+# snapshot of the old file — comparing this against the file on disk is the only
+# way to tell "the colours are wrong" from "this shell has not seen them yet".
+__ptai_stamp='@KEY@ @ROLE_DIR@ @ROLE_FILE@ @ROLE_META@'
+
+# Fedora ships /etc/profile.d/colorls.sh, and some shells re-run dircolors after
+# user rc files. Re-assert on every prompt so a late setter cannot win; costs a
+# string compare per prompt.
+#
+# Folded into __ptai_arm rather than appended to PROMPT_COMMAND: arming has to be
+# the LAST hook to run, and a later entry makes the DEBUG trap fire on that entry
+# instead of on the command you typed, disarming itself and killing the reveal.
+__ptai_lsguard() {
+  [ "$LS_COLORS" = "$__ptai_lsc" ] || export LS_COLORS="$__ptai_lsc"
+}
+export GREP_COLORS="mt=$(__ptai_sgr '@HOT@');1:fn=$(__ptai_sgr '@A6@'):ln=$(__ptai_sgr '@DIM@'):se=$(__ptai_sgr '@DIM@')"
+
+# ptai-colors — print the legend, so a preset switch can be judged at a glance
+# --debug reports whether the colours actually reach ls, which is a different
+# question from whether they are defined correctly here.
+ptai-colors() {
+  if [ "$1" = "--debug" ] || [ "$1" = "-d" ]; then
+    printf '%s>PTAI LS_COLORS DEBUG%s\n' "$__ptai_hot" "$__ptai_off"
+    printf '  LS_COLORS set ..... %s\n' "${LS_COLORS:+yes (${#LS_COLORS} chars)}${LS_COLORS:-NO — not exported}"
+    printf '  preset in shell ... %s\n' "${__ptai_stamp%% *}"
+  local __f="$HOME/.local/share/ptai-theme/ptai.sh" __disk=""
+  [ -f "$__f" ] && __disk="$(sed -n "s/^__ptai_stamp='\(.*\)'$/\1/p" "$__f")"
+  if [ -n "$__disk" ] && [ "$__disk" != "$__ptai_stamp" ]; then
+    printf '  vs file on disk ... %sSTALE — this shell sourced %s, disk has %s%s\n' \
+      "$__ptai_hot" "${__ptai_stamp%% *}" "${__disk%% *}" "$__ptai_off"
+    printf '                      fix: exec bash   (or open a new terminal)\n'
+  else
+    printf '  vs file on disk ... %s\n' "${__disk:+current}${__disk:-file missing — run ./ptai-theme install}"
+  fi
+  printf '  di entry .......... %s\n' "$(printf '%s' "$LS_COLORS" | tr ':' '\n' | grep '^di=' || echo 'MISSING')"
+    printf '  fi entry .......... %s\n' "$(printf '%s' "$LS_COLORS" | tr ':' '\n' | grep '^fi=' || echo 'MISSING')"
+    printf '  unsubstituted ..... %s\n' "$(case "$LS_COLORS" in *@ROLE_*) echo 'YES — render did not run; reinstall' ;; *) echo no ;; esac)"
+    printf '  ls alias .......... %s\n' "$(alias ls 2>/dev/null || echo 'NONE — ls has no --color')"
+    printf '  command reveal .... %s\n' \
+      "$(if [ -n "$(trap -p DEBUG)" ]; then
+           echo 'on — pipes commands through the typer, so --color=auto would'
+           printf '                      drop colour; aliases use $__ptai_lscolor to force it'
+         else echo 'off'; fi)"
+    printf '  ls is ............. %s\n' "$(type -t ls)"
+    printf '  TERM .............. %s\n' "${TERM:-unset}"
+    printf '  escapes emitted ... %s\n' \
+      "$(if command ls --color=always -d / /etc/hostname 2>/dev/null | grep -q $'\e\['; then echo yes; else echo 'NO — ls is not colourising'; fi)"
+    printf '\n  If LS_COLORS is set and correct but nothing is coloured, another file is\n'
+    printf '  overwriting it after ptai.sh runs. Find it with:\n'
+    printf '    grep -rn LS_COLORS ~/.bashrc ~/.bash_profile /etc/profile.d/ 2>/dev/null\n'
+    return
+  fi
+  printf '%s>PTAI @NAME@ / FILE CLASSES%s\n' "$__ptai_hot" "$__ptai_off"
+  printf '  \e[%sm%-22s\e[0m %s\n' \
+    "$__ptai_dirc"   'directory/'      'dir, sticky, other-writable' \
+    "$__ptai_filec"  'regular.file'    'everything unclassified' \
+    "$__ptai_linkc"  'symlink -> target' 'link, hardlink' \
+    "$__ptai_execc"  'executable'      'any +x file' \
+    "$__ptai_archc"  'archive.tar.gz'  'tar zip rpm deb iso' \
+    "$__ptai_mediac" 'image.png'       'image, audio, video' \
+    "$__ptai_devbc"  'block-device'    'bd — disks, loop, dm' \
+    "$__ptai_devcc"  'char-device'     'cd — tty, null, random' \
+    "$__ptai_pipec"  'named.pipe'      'pi — fifos' \
+    "$__ptai_sockc"  'socket='         'so — unix sockets' \
+    "$__ptai_metac"  'notes.log'       'logs, backups, build noise' \
+    "$__ptai_warnc"  'broken -> gone'  'dangling link, setuid'
+}
+
+# auto normally; the reveal flips it to always while it pipes a command through
+# the typer. Expanded when the command runs, so the aliases pick up both states.
+__ptai_lscolor=auto
+alias ls='ls --color=$__ptai_lscolor --group-directories-first'
+alias ll='ls -lh --color=$__ptai_lscolor --group-directories-first'
+alias la='ls -lha --color=$__ptai_lscolor --group-directories-first'
+alias grep='grep --color=$__ptai_lscolor'
+alias ptai-banner='PTAI_BANNER_DELAY=0 __ptai_banner'
+alias ptai-boot='__ptai_banner'
+alias ptai-status='printf ">PTAI @NAME@ / NOMINAL\n"'
+alias ptai-reveal='ptai-type'
+alias ptai-legend='ptai-colors'

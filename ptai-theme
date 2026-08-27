@@ -1,0 +1,1014 @@
+#!/usr/bin/env bash
+# PTAI — Personal-Terminal-Access-Interface system theme
+# Fedora 44 Workstation / GNOME on Wayland
+set -euo pipefail
+
+SELF="$(readlink -f "${BASH_SOURCE[0]}")"
+ROOT="$(dirname "$SELF")"
+SRC="$ROOT/src"
+PRESETS="$ROOT/presets"
+
+THEMES="$HOME/.themes"
+SHARE="$HOME/.local/share/ptai-theme"
+FONTDIR="$HOME/.local/share/fonts/ptai"
+CFG="$HOME/.config"
+STATE="$SHARE/current"
+
+WITH_GTK=1
+WITH_ICONS=1
+WITH_FONTS=1
+PRESET=""
+CMD=""
+ORG="HELIOS-YUTANI"
+CRTMODE=""
+
+c()  { printf '\e[38;2;63;242;168m%s\e[0m\n' "$*"; }
+d()  { printf '\e[38;2;28;122;85m%s\e[0m\n' "$*"; }
+err(){ printf '\e[38;2;255;180;60m[!] %s\e[0m\n' "$*" >&2; }
+step(){ printf '\e[38;2;28;122;85m[\e[38;2;63;242;168m*\e[38;2;28;122;85m] \e[0m%s\n' "$*"; }
+
+usage() {
+cat <<'EOF'
+PTAI system theme
+
+  ptai-theme install [PRESET]   install everything, apply PRESET (default: green)
+  ptai-theme reload             re-apply from this working copy, no logout needed
+  ptai-theme doctor             check why the theme is not applying
+  ptai-theme set PRESET         switch preset (any name from `list`)
+  ptai-theme list               list presets
+  ptai-theme status             show what is installed and active
+  ptai-theme crt on|off         toggle the CRT overlay
+  ptai-theme crt subtle|standard|heavy|off   overlay intensity
+  ptai-theme crt terminal|screen            overlay scope (default: terminal)
+  ptai-theme gdm [PRESET]       theme the login screen (needs sudo)
+  ptai-theme gdm-restore        put the stock login screen back (needs sudo)
+  ptai-theme gdm-doctor         report why the login screen is not themed
+  ptai-theme gdm-edit           edit the live greeter CSS and re-apply (sudo)
+  ptai-theme gdm-reload         re-apply the live greeter CSS as-is (sudo)
+  ptai-theme gdm-preview        open a nested greeter to check changes
+  ptai-theme uninstall          remove everything PTAI installed
+
+Options for install:
+  --gtk            override GTK3/GTK4 app colours — Files, Settings, dialogs (default: on)
+  --no-gtk         leave GTK apps on stock Adwaita
+  --no-icons       skip the PTAI icon set (keeps Adwaita icons)
+  --no-fonts       skip downloading fonts (assumes they are already installed)
+  --org "NAME"     wordmark used on the wallpaper (default: HELIOS-YUTANI)
+EOF
+}
+
+need() { command -v "$1" >/dev/null 2>&1; }
+
+# gsettings set that never aborts the run: missing schema or key is just skipped
+gset() {
+  local schema="$1" key="$2" val="$3"
+  gsettings list-keys "$schema" 2>/dev/null | grep -qx "$key" || { d "  skip $schema $key (not in this version)"; return 0; }
+  gsettings set "$schema" "$key" "$val" 2>/dev/null || d "  skip $schema $key (rejected)"
+}
+
+load_preset() {
+  local key="$1"
+  [ -f "$PRESETS/$key.conf" ] || { err "unknown preset: $key"; exit 1; }
+  ACCENT=""; LIGHT=0
+  # shellcheck disable=SC1090
+  source "$PRESETS/$key.conf"
+  : "${LIGHT:=0}"
+}
+
+# substitute @TOKENS@ from the loaded preset
+render() {
+  local in="$1" out="$2"
+  mkdir -p "$(dirname "$out")"
+  sed -e "s|@NAME@|$NAME|g" \
+      -e "s|@KEY@|$KEY|g" \
+      -e "s|@BG@|$BG|g" \
+      -e "s|@FG@|$FG|g" \
+      -e "s|@DIM@|$DIM|g" \
+      -e "s|@HOT@|$HOT|g" \
+      -e "s|@GLOW@|$GLOW|g" \
+      -e "s|@ORG@|$ORG|g" \
+      -e "s|@ANSIFG@|$ANSIFG|g" \
+      -e "s|@ANSIDIM@|$ANSIDIM|g" \
+      -e "s|@ANSIHOT@|$ANSIHOT|g" \
+      -e "s|@LOGOPATH@|$SHARE/logo.txt|g" \
+      -e "s|@ROLE_DIR@|$ROLE_DIR|g"     -e "s|@ROLE_FILE@|$ROLE_FILE|g" \
+      -e "s|@ROLE_LINK@|$ROLE_LINK|g"   -e "s|@ROLE_EXEC@|$ROLE_EXEC|g" \
+      -e "s|@ROLE_ARCH@|$ROLE_ARCH|g"   -e "s|@ROLE_MEDIA@|$ROLE_MEDIA|g" \
+      -e "s|@ROLE_DEV@|$ROLE_DEV|g"     -e "s|@ROLE_META@|$ROLE_META|g" \
+      -e "s|@A0@|$A0|g"   -e "s|@A1@|$A1|g"   -e "s|@A2@|$A2|g"   -e "s|@A3@|$A3|g" \
+      -e "s|@A4@|$A4|g"   -e "s|@A5@|$A5|g"   -e "s|@A6@|$A6|g"   -e "s|@A7@|$A7|g" \
+      -e "s|@A8@|$A8|g"   -e "s|@A9@|$A9|g"   -e "s|@A10@|$A10|g" -e "s|@A11@|$A11|g" \
+      -e "s|@A12@|$A12|g" -e "s|@A13@|$A13|g" -e "s|@A14@|$A14|g" -e "s|@A15@|$A15|g" \
+      "$in" > "$out"
+}
+
+install_fonts() {
+  [ "$WITH_FONTS" -eq 1 ] || { d "  fonts skipped"; return; }
+  mkdir -p "$FONTDIR"
+  local base="https://github.com/google/fonts/raw/main/ofl"
+  local -a f=(
+    "silkscreen/Silkscreen-Regular.ttf"
+    "silkscreen/Silkscreen-Bold.ttf"
+    "sharetechmono/ShareTechMono-Regular.ttf"
+    "vt323/VT323-Regular.ttf"
+  )
+  need curl || { err "curl not found — run with --no-fonts, or: sudo dnf install curl"; return; }
+  for p in "${f[@]}"; do
+    local name="${p##*/}"
+    if [ -f "$FONTDIR/$name" ]; then d "  have $name"; continue; fi
+    d "  fetching $name"
+    curl -fsSL "$base/$p" -o "$FONTDIR/$name" || err "could not fetch $name"
+  done
+  fc-cache -f "$FONTDIR" >/dev/null 2>&1 || true
+}
+
+install_shell_theme() {
+  local dir="$THEMES/PTAI-$NAME/gnome-shell"
+  mkdir -p "$dir"
+  render "$SRC/gnome-shell.css.in" "$dir/gnome-shell.css"
+  cp -f "$SRC/scanline.svg" "$dir/scanline.svg"
+  # GTK3 shim so the theme name is valid to gnome-tweaks
+  mkdir -p "$THEMES/PTAI-$NAME/gtk-3.0"
+  printf '@import url("resource:///org/gnome/theme/gtk-contained-dark.css");\n' \
+    > "$THEMES/PTAI-$NAME/gtk-3.0/gtk.css" 2>/dev/null || true
+  cat > "$THEMES/PTAI-$NAME/index.theme" <<EOF
+[Desktop Entry]
+Type=X-GNOME-Metatheme
+Name=PTAI-$NAME
+Comment=Personal-Terminal-Access-Interface
+Encoding=UTF-8
+
+[X-GNOME-Metatheme]
+GtkTheme=$([ "$LIGHT" -eq 1 ] && echo Adwaita || echo Adwaita-dark)
+MetacityTheme=Adwaita
+IconTheme=Adwaita
+CursorTheme=Adwaita
+EOF
+}
+
+# Sounds were removed from the project; an install that previously applied them
+# must undo the theme and settings rather than leave them behind.
+purge_sounds() {
+  local had=0
+  [ -d "$HOME/.local/share/sounds/PTAI-$NAME" ] && had=1
+  [ -d "$SHARE/sounds" ] && had=1
+  rm -rf "$HOME/.local/share/sounds"/PTAI-*
+  rm -rf "$SHARE/sounds" "$SHARE/ptai-sound" "$SHARE/sound.conf" "$SHARE/hum.pid"
+  pkill -f ptai-hum-loop 2>/dev/null || true
+  if [ "$had" -eq 1 ]; then
+    gsettings reset org.gnome.desktop.sound theme-name 2>/dev/null || true
+    d "  removed previous PTAI sound theme"
+  fi
+}
+
+install_gtk() {
+  if [ "$WITH_GTK" -eq 0 ]; then
+    # opting out must also undo a previous opt-in
+    for f in "$CFG/gtk-4.0/gtk.css" "$CFG/gtk-3.0/gtk.css"; do
+      [ -f "$f" ] && grep -q 'PTAI' "$f" && rm -f "$f"
+    done
+    d "  gtk override removed (--no-gtk)"
+    return 0
+  fi
+  render "$SRC/gtk.css.in" "$CFG/gtk-4.0/gtk.css"
+  render "$SRC/gtk.css.in" "$CFG/gtk-3.0/gtk.css"
+}
+
+install_icons() {
+  local theme="PTAI-$NAME" dest="$HOME/.local/share/icons/PTAI-$NAME"
+  if [ "$WITH_ICONS" -eq 0 ]; then d "  icons skipped"; return 0; fi
+  [ -d "$SRC/icons" ] || { err "icon sources missing at $SRC/icons"; return 0; }
+  rm -rf "$dest"
+  render "$SRC/icons/index.theme.in" "$dest/index.theme"
+  local ctx f name
+  for ctx in places mimetypes apps; do
+    mkdir -p "$dest/$ctx/scalable"
+    for f in "$SRC/icons/$ctx"/*.svg.in; do
+      [ -e "$f" ] || continue
+      name="$(basename "$f" .svg.in)"
+      render "$f" "$dest/$ctx/scalable/$name.svg"
+    done
+  done
+  # aliases: one symlink per line, alias<TAB>target
+  local alias target
+  while IFS=$'\t' read -r alias target; do
+    case "$alias" in ''|'#'*) continue ;; esac
+    [ -n "${target:-}" ] || continue
+    ctx="${alias%%/*}"; name="${alias##*/}"
+    [ -d "$dest/$ctx/scalable" ] || continue
+    # a drawn icon always beats an alias of the same name: aliases.txt accumulates
+    # entries that later get their own glyph, and ln -sf would clobber the real file
+    if [ -f "$SRC/icons/$ctx/$name.svg.in" ]; then
+      continue
+    fi
+    case "$target" in
+      ../*) ln -sf "../../${target#../}/scalable/${target##*/}.svg" "$dest/$ctx/scalable/$name.svg" 2>/dev/null || true ;;
+      *)    ln -sf "$target.svg" "$dest/$ctx/scalable/$name.svg" 2>/dev/null || true ;;
+    esac
+  done < "$SRC/icons/aliases.txt"
+  if need gtk-update-icon-cache; then
+    gtk-update-icon-cache -qf "$dest" 2>/dev/null || true
+  fi
+  d "  icon theme $theme ($(find "$dest" -name '*.svg' | wc -l) names)"
+}
+
+# Why-does-it-look-wrong check. The common failure is a shell theme that is
+# installed but not loaded: the panel looks right (our extension styles itself)
+# while everything else stays stock, which reads as "the theme did not apply".
+do_doctor() {
+  local ut="user-theme@gnome-shell-extensions.gcampax.github.com"
+  local crt="ptai-crt@ptai.local"
+  local fail=0
+  c ">PTAI DOCTOR"
+
+  chk() {
+    if [ "$2" = "1" ]; then printf '  [ OK ] %s\n' "$1"
+    else printf '  [FAIL] %s\n' "$1"; fail=1; fi
+  }
+
+  chk "theme dir $THEMES/PTAI-$NAME" "$([ -d "$THEMES/PTAI-$NAME/gnome-shell" ] && echo 1 || echo 0)"
+  chk "gnome-shell.css rendered" "$([ -f "$THEMES/PTAI-$NAME/gnome-shell/gnome-shell.css" ] && echo 1 || echo 0)"
+  chk "User Themes installed" "$(gsettings list-schemas | grep -q 'user-theme' && echo 1 || echo 0)"
+  chk "User Themes ENABLED" "$(gnome-extensions list --enabled 2>/dev/null | grep -qF "$ut" && echo 1 || echo 0)"
+  chk "shell theme set to PTAI-$NAME" "$([ "$(gsettings get org.gnome.shell.extensions.user-theme name 2>/dev/null | tr -d \"\'\")" = "PTAI-$NAME" ] && echo 1 || echo 0)"
+  chk "ptai-crt extension enabled" "$(gnome-extensions list --enabled 2>/dev/null | grep -qF "$crt" && echo 1 || echo 0)"
+  chk "extension stylesheet rendered" "$([ -f "$HOME/.local/share/gnome-shell/extensions/$crt/stylesheet.css" ] && echo 1 || echo 0)"
+  chk "icon theme active" "$([ "$(gsettings get org.gnome.desktop.interface icon-theme 2>/dev/null | tr -d \"\'\")" = "PTAI-$NAME" ] && echo 1 || echo 0)"
+  chk "gtk override present" "$([ -f "$CFG/gtk-4.0/gtk.css" ] && echo 1 || echo 0)"
+  chk "fonts installed" "$([ "$(fc-list 2>/dev/null | grep -ci 'Share Tech Mono')" -gt 0 ] && echo 1 || echo 0)"
+
+  # the terminal palette is selected by name in dconf and read from a file; a
+  # mismatch between the two is the failure that looks like "colours are wrong"
+  local pslot ppal="$HOME/.local/share/org.gnome.Ptyxis/palettes"
+  [ -d "$HOME/.var/app/org.gnome.Ptyxis" ] &&
+    ppal="$HOME/.var/app/org.gnome.Ptyxis/data/org.gnome.Ptyxis/palettes"
+  pslot="$(dconf read "/org/gnome/Ptyxis/Profiles/$(dconf read /org/gnome/Ptyxis/default-profile-uuid 2>/dev/null | tr -d "'")/palette" 2>/dev/null | tr -d "'")"
+  chk "ptyxis palette selected" "$(case "$pslot" in ptai-a|ptai-b) echo 1 ;; *) echo 0 ;; esac)"
+  chk "ptyxis palette file exists" "$([ -n "$pslot" ] && [ -f "$ppal/$pslot.palette" ] && echo 1 || echo 0)"
+  chk "palette matches preset $NAME" "$([ -n "$pslot" ] && grep -qiF "$BG" "$ppal/$pslot.palette" 2>/dev/null && echo 1 || echo 0)"
+
+  echo
+  if [ "$fail" -eq 0 ]; then
+    c ">ALL CHECKS PASSED"
+  else
+    err "Something above failed. If 'User Themes ENABLED' is the failure, the panel"
+    err "will look themed while quick settings, dash, search and app folders stay"
+    err "stock grey — the shell stylesheet is never loaded. Fix with:"
+    err "    gnome-extensions enable $ut && ./ptai-theme reload"
+    err "If a 'ptyxis palette' line failed, run ./ptai-theme reload; if the palette"
+    err "still does not match, another palette was picked by hand in Preferences."
+  fi
+}
+
+install_wallpaper() {
+  mkdir -p "$SHARE"
+  render "$SRC/wallpaper.svg.in" "$SHARE/wallpaper-$KEY.svg"
+  if need rsvg-convert; then
+    rsvg-convert -w 3840 -h 2160 "$SHARE/wallpaper-$KEY.svg" -o "$SHARE/wallpaper-$KEY.png" 2>/dev/null || true
+  elif need magick; then
+    magick -background none "$SHARE/wallpaper-$KEY.svg" -resize 3840x2160 "$SHARE/wallpaper-$KEY.png" 2>/dev/null || true
+  fi
+}
+
+install_terminal() {
+  # TWO palette files, ptai-a and ptai-b, with the live colours in whichever one
+  # the profile is NOT currently using. Switching then flips the dconf key to the
+  # other name.
+  #
+  # This is what makes a switch take effect without a logout. Ptyxis scans the
+  # palettes directory at startup only, so a name it has not already seen is
+  # silently ignored (it falls back to its own default — the blue). But it does
+  # watch the profile's palette KEY, and re-reads the file when the selection
+  # changes. Keeping both names present from startup means the target of every
+  # flip is a name it scanned, and the flip itself is what triggers the re-read.
+  local dirs="$HOME/.local/share/org.gnome.Ptyxis/palettes"
+  # the Flatpak build reads its own sandboxed data dir and ignores the one above
+  [ -d "$HOME/.var/app/org.gnome.Ptyxis" ] &&
+    dirs="$dirs $HOME/.var/app/org.gnome.Ptyxis/data/org.gnome.Ptyxis/palettes"
+
+  need dconf || { err "dconf missing — pick the PTAI palette by hand in Ptyxis preferences"; return 0; }
+
+  local base="/org/gnome/Ptyxis" uuid uuids="" stale
+  uuids="$(dconf list $base/Profiles/ 2>/dev/null | tr -d '/')"
+  if [ -z "$uuids" ]; then
+    uuid="$(dconf read $base/default-profile-uuid 2>/dev/null | tr -d "'")"
+    [ -n "$uuid" ] || uuid="$(uuidgen 2>/dev/null | tr -d '-')"
+    [ -n "$uuid" ] || return 0
+    dconf write $base/profile-uuids "['$uuid']" 2>/dev/null || true
+    dconf write $base/default-profile-uuid "'$uuid'" 2>/dev/null || true
+    uuids="$uuid"
+  fi
+
+  # which slot is in use now, read from the default profile
+  local cur def slot other
+  def="$(dconf read $base/default-profile-uuid 2>/dev/null | tr -d "'")"
+  [ -n "$def" ] || def="$(printf '%s\n' $uuids | head -1)"
+  cur="$(dconf read "$base/Profiles/$def/palette" 2>/dev/null | tr -d "'")"
+  case "$cur" in
+    ptai-a) slot="ptai-b"; other="ptai-a" ;;
+    *)      slot="ptai-a"; other="ptai-b" ;;
+  esac
+
+  local pal
+  for pal in $dirs; do
+    mkdir -p "$pal"
+    # live colours into the slot we are about to select
+    render "$SRC/ptyxis.palette.in" "$pal/$slot.palette"
+    # the other slot must exist too, so both names are known at next startup
+    [ -f "$pal/$other.palette" ] || render "$SRC/ptyxis.palette.in" "$pal/$other.palette"
+    # drop the per-preset and single-file names older versions left behind, or
+    # Ptyxis lists a pile of near-identical PTAI palettes in its preferences
+    rm -f "$pal"/ptai.palette
+    for stale in "$pal"/ptai-*.palette; do
+      case "$stale" in
+        "$pal/ptai-a.palette"|"$pal/ptai-b.palette") ;;
+        *) rm -f "$stale" ;;
+      esac
+    done
+  done
+
+  # every profile, not just the default — an open window may be using another
+  local n=0
+  for uuid in $uuids; do
+    dconf write "$base/Profiles/$uuid/palette" "'$slot'" 2>/dev/null || true
+    n=$((n + 1))
+  done
+  d "  ptyxis palette $slot on $n profile(s) — open windows repaint live"
+}
+
+install_prompt() {
+  mkdir -p "$SHARE"
+  render "$SRC/ptai.sh.in" "$SHARE/ptai.sh"
+  install -m 0755 "$SRC/ptai-type" "$SHARE/ptai-type"
+  need perl || err "perl missing — command reveal disabled (dnf install perl-interpreter)"
+  cp -f "$SRC/logo.txt" "$SHARE/logo.txt"
+  local line='[ -f "$HOME/.local/share/ptai-theme/ptai.sh" ] && source "$HOME/.local/share/ptai-theme/ptai.sh"  # PTAI'
+  if ! grep -qF '# PTAI' "$HOME/.bashrc" 2>/dev/null; then
+    printf '\n%s\n' "$line" >> "$HOME/.bashrc"
+  fi
+}
+
+install_extension() {
+  local uuid="ptai-crt@ptai.local"
+  local dest="$HOME/.local/share/gnome-shell/extensions/$uuid"
+  mkdir -p "$dest/schemas"
+  cp -f "$SRC/extension/metadata.json" "$dest/metadata.json"
+  cp -f "$SRC/extension/extension.js" "$dest/extension.js"
+  cp -f "$SRC/extension/prefs.js" "$dest/prefs.js"
+  # per-preset stylesheet: the extension's actors must be styled even when the
+  # shell theme is stock, so the classes ship with the extension too
+  render "$SRC/extension/stylesheet.css.in" "$dest/stylesheet.css"
+  cp -f "$SRC/extension/schemas/"*.gschema.xml "$dest/schemas/"
+  if need glib-compile-schemas; then
+    glib-compile-schemas "$dest/schemas" 2>/dev/null || err "schema compile failed"
+  else
+    err "glib-compile-schemas missing — sudo dnf install glib2-devel"
+  fi
+
+  # seed the overlay colour from the preset
+  local sp="/org/gnome/shell/extensions/ptai-crt/"
+  if need dconf; then
+    dconf write "${sp}tint-color" "'$FG'" 2>/dev/null || true
+    dconf write "${sp}panel-org" "'$ORG'" 2>/dev/null || true
+    # scanlines belong in the terminal, not over the whole session
+    dconf write "${sp}target" "'terminal'" 2>/dev/null || true
+    # a light preset cannot carry a dark CRT overlay: pull the effects back
+    if [ "$LIGHT" -eq 1 ]; then
+      dconf write "${sp}scanline-opacity" '0.06' 2>/dev/null || true
+      dconf write "${sp}vignette-opacity" '0.12' 2>/dev/null || true
+      dconf write "${sp}tint-opacity"     '0.02' 2>/dev/null || true
+      dconf write "${sp}flicker-enabled"  'false' 2>/dev/null || true
+      dconf write "${sp}sweep-opacity"    '0.05' 2>/dev/null || true
+    fi
+  fi
+
+  if need gnome-extensions; then
+    gnome-extensions enable "$uuid" 2>/dev/null \
+      || d "  enable after next login: gnome-extensions enable $uuid"
+  fi
+}
+
+# Re-apply what a running session caches. Writing the files is not enough: the
+# shell holds the parsed stylesheet, the extension holds its own, and the icon
+# theme is cached per name. Disabling and re-enabling the extension makes GNOME
+# drop and re-import extension.js, which is the only way to pick up JS changes
+# on Wayland; renaming the shell theme forces a stylesheet reload the same way.
+# Shared by set and reload.
+repaint_session() {
+  local uuid="ptai-crt@ptai.local"
+
+  if need gnome-extensions; then
+    gnome-extensions disable "$uuid" 2>/dev/null || true
+    sleep 1
+    gnome-extensions enable "$uuid" 2>/dev/null || true
+    d "  extension re-imported"
+  fi
+
+  # the theme name must actually change for the shell to re-read the stylesheet;
+  # setting it to the value it already holds does nothing
+  if need gsettings; then
+    gsettings set org.gnome.shell.extensions.user-theme name '' 2>/dev/null || true
+    sleep 1
+    gsettings set org.gnome.shell.extensions.user-theme name "PTAI-$NAME" 2>/dev/null || true
+    d "  shell stylesheet re-read"
+  fi
+
+  if need gtk-update-icon-cache; then
+    gtk-update-icon-cache -qf "$HOME/.local/share/icons/PTAI-$NAME" 2>/dev/null || true
+  fi
+}
+
+do_reload() {
+  c ">RELOADING $NAME FROM $ROOT"
+
+  step "shell theme";  install_shell_theme
+  step "extension";    install_extension
+  step "gtk";          install_gtk
+  step "icons";        install_icons
+  # the prompt file carries LS_COLORS and the terminal palette carries the ANSI
+  # ramp — both derive from the preset, so a reload that skips them leaves role
+  # colours on the old values with no sign anything went wrong
+  step "prompt";       install_prompt
+  step "terminal";     install_terminal
+  purge_sounds
+
+  repaint_session
+
+  c ">RELOADED"
+  d "  GTK apps need a restart of the app itself; the shell and icons are live"
+  d "  this shell still holds the old LS_COLORS: exec bash  (or a new terminal)"
+  d "  extension errors: journalctl -f -o cat /usr/bin/gnome-shell"
+}
+
+install_fastfetch() {
+  need fastfetch || { d "  fastfetch not installed — config written anyway"; }
+  render "$SRC/fastfetch.jsonc.in" "$CFG/fastfetch/config.jsonc"
+}
+
+# Everything except the `gdm*` subcommands writes into the calling user's home
+# and dconf. Under sudo that is root's home and root's dconf: the greeter (the
+# only system-wide piece) changes and the desktop appears untouched. Refuse
+# rather than half-apply.
+require_user_session() {
+  [ "$(id -u)" -ne 0 ] && return 0
+  err "do not run this as root."
+  err "    Under sudo the shell theme, wallpaper, terminal palette and dconf keys"
+  err "    all go to root — which is why only the login screen appears to change."
+  if [ -n "${SUDO_USER:-}" ]; then
+    err "    run:  $SELF $CMD $PRESET          (as $SUDO_USER, no sudo)"
+  else
+    err "    run it as your normal user, without sudo."
+  fi
+  err "    only the login screen needs root:  sudo $SELF gdm $PRESET"
+  exit 1
+}
+
+apply_settings() {
+  need gsettings || { err "gsettings missing — cannot apply"; return; }
+  local wp="$SHARE/wallpaper-$KEY.png"
+  [ -f "$wp" ] || wp="$SHARE/wallpaper-$KEY.svg"
+
+  if [ "$LIGHT" -eq 1 ]; then
+    gset org.gnome.desktop.interface color-scheme 'default'
+    gset org.gnome.desktop.interface gtk-theme 'Adwaita'
+  else
+    gset org.gnome.desktop.interface color-scheme 'prefer-dark'
+    gset org.gnome.desktop.interface gtk-theme 'Adwaita-dark'
+  fi
+  gset org.gnome.desktop.interface font-name 'Share Tech Mono 11'
+  gset org.gnome.desktop.interface document-font-name 'Share Tech Mono 11'
+  gset org.gnome.desktop.interface monospace-font-name 'VT323 14'
+  gset org.gnome.desktop.wm.preferences titlebar-font 'Share Tech Mono Bold 11'
+  gset org.gnome.desktop.interface font-antialiasing 'grayscale'
+  gset org.gnome.desktop.interface font-hinting 'full'
+
+  gset org.gnome.desktop.background picture-uri "file://$wp"
+  gset org.gnome.desktop.background picture-uri-dark "file://$wp"
+  gset org.gnome.desktop.background picture-options 'zoom'
+  gset org.gnome.desktop.background primary-color "$BG"
+  gset org.gnome.desktop.screensaver picture-uri "file://$wp"
+  gset org.gnome.desktop.screensaver primary-color "$BG"
+
+  if [ "$WITH_ICONS" -eq 1 ] && [ -d "$HOME/.local/share/icons/PTAI-$NAME" ]; then
+    gset org.gnome.desktop.interface icon-theme "PTAI-$NAME"
+  fi
+
+  # Files: schematic list view, no thumbnail noise competing with the icon set
+  if gsettings list-schemas | grep -q '^org.gnome.nautilus.preferences$'; then
+    gset org.gnome.nautilus.preferences default-folder-viewer 'list-view'
+    gset org.gnome.nautilus.preferences show-delete-permanently true
+    gset org.gnome.nautilus.preferences show-create-link true
+    gset org.gnome.nautilus.icon-view default-zoom-level 'small'
+    gset org.gnome.nautilus.list-view use-tree-view true
+    gset org.gnome.nautilus.list-view default-zoom-level 'small'
+  fi
+
+  # accent colour: GNOME 47+ named accents only, nearest named match per preset
+  [ -n "$ACCENT" ] && gset org.gnome.desktop.interface accent-color "$ACCENT"
+
+  # shell theme (needs User Themes extension)
+  # The schema being present only means the extension is INSTALLED. If it is not
+  # also enabled, setting the name silently does nothing and every rule outside
+  # our own extension's stylesheet is ignored — which looks like a broken theme.
+  local ut="user-theme@gnome-shell-extensions.gcampax.github.com"
+  if gsettings list-schemas | grep -q 'org.gnome.shell.extensions.user-theme'; then
+    if need gnome-extensions && ! gnome-extensions list --enabled 2>/dev/null | grep -qF "$ut"; then
+      gnome-extensions enable "$ut" 2>/dev/null \
+        && d "  enabled User Themes" \
+        || err "could not enable User Themes — run: gnome-extensions enable $ut"
+    fi
+    gset org.gnome.shell.extensions.user-theme name "PTAI-$NAME"
+    if need gnome-extensions && ! gnome-extensions list --enabled 2>/dev/null | grep -qF "$ut"; then
+      err "User Themes is installed but NOT enabled — the shell theme will not load."
+      err "    quick settings, dash, search and app folders will stay stock grey."
+      err "    fix: gnome-extensions enable $ut  (then ./ptai-theme reload)"
+    fi
+  else
+    err "User Themes extension not installed — shell theme installed but inactive."
+    err "    sudo dnf install gnome-shell-extension-user-theme"
+    err "    gnome-extensions enable $ut"
+    err "    then: ./ptai-theme reload"
+  fi
+
+  # Ptyxis
+  if gsettings list-schemas | grep -q 'org.gnome.Ptyxis'; then
+    gset org.gnome.Ptyxis interface-style "$([ "$LIGHT" -eq 1 ] && echo light || echo dark)"
+    gset org.gnome.Ptyxis use-system-font false
+    gset org.gnome.Ptyxis font-name 'VT323 16'
+    gset org.gnome.Ptyxis opacity 0.94
+    # palette key was renamed between Ptyxis releases; try each
+    for k in default-palette palette; do
+      gsettings list-keys org.gnome.Ptyxis 2>/dev/null | grep -qx "$k" && gsettings set org.gnome.Ptyxis "$k" "ptai-$KEY" 2>/dev/null && break
+    done
+    # per-profile palette (Ptyxis 47+ keeps colours on the profile)
+    local prof
+    prof="$(gsettings get org.gnome.Ptyxis default-profile-uuid 2>/dev/null | tr -d "'" || true)"
+    # the palette itself is install_terminal's job; writing it here too raced it
+    # and put the old per-preset name back, leaving Ptyxis on its own default
+    if [ -n "${prof:-}" ] && need dconf; then
+      dconf write "/org/gnome/Ptyxis/Profiles/$prof/opacity" "0.94" 2>/dev/null || true
+    fi
+  fi
+
+  # GNOME Terminal / Console fallback
+  if need dconf && gsettings list-schemas | grep -q 'org.gnome.Terminal.Legacy.Profile'; then
+    local pid
+    pid="$(gsettings get org.gnome.Terminal.ProfilesList default 2>/dev/null | tr -d "'" || true)"
+    if [ -n "${pid:-}" ]; then
+      local path="/org/gnome/terminal/legacy/profiles:/:$pid/"
+      dconf write "${path}use-theme-colors" "false"
+      dconf write "${path}background-color" "'$BG'"
+      dconf write "${path}foreground-color" "'$FG'"
+      dconf write "${path}cursor-colors-set" "true"
+      dconf write "${path}cursor-background-color" "'$HOT'"
+      dconf write "${path}cursor-foreground-color" "'$BG'"
+      dconf write "${path}palette" "['$A0','$A1','$A2','$A3','$A4','$A5','$A6','$A7','$A8','$A9','$A10','$A11','$A12','$A13','$A14','$A15']"
+      dconf write "${path}use-system-font" "false"
+      dconf write "${path}font" "'VT323 16'"
+      dconf write "${path}use-transparent-background" "true"
+      dconf write "${path}background-transparency-percent" "6"
+      dconf write "${path}cursor-blink-mode" "'on'"
+    fi
+  fi
+
+  echo "$KEY" > "$STATE"
+}
+
+# When invoked through sudo, $HOME is root's — find the real user's asset dir.
+user_share() {
+  local h="$HOME"
+  if [ -n "${SUDO_USER:-}" ]; then
+    h="$(getent passwd "$SUDO_USER" | cut -d: -f6)"
+  fi
+  printf '%s' "$h/.local/share"
+}
+
+install_gdm() {
+  if [ "$(id -u)" -ne 0 ]; then
+    d "  GDM greeter needs root — run: sudo $SELF gdm $KEY"
+    return 0
+  fi
+
+  local ushare uassets wp
+  ushare="$(user_share)"
+  uassets="$ushare/ptai-theme"
+
+  install -d /usr/share/ptai-theme
+
+  # wallpaper: copy out of the user's home so the greeter (running as gdm) can read it
+  wp=""
+  for cand in "$uassets/wallpaper-$KEY.png" "$uassets/wallpaper-$KEY.svg" \
+              "$SHARE/wallpaper-$KEY.png" "$SHARE/wallpaper-$KEY.svg"; do
+    [ -f "$cand" ] && { install -m 0644 "$cand" "/usr/share/ptai-theme/$(basename "$cand")"; wp="/usr/share/ptai-theme/$(basename "$cand")"; break; }
+  done
+  [ -n "$wp" ] || err "no wallpaper found — run the non-root install first"
+
+  # fonts system-wide: the greeter session has no access to ~/.local/share/fonts
+  local fsrc="$ushare/fonts/ptai"
+  [ -d "$fsrc" ] || fsrc="$FONTDIR"
+  if [ -d "$fsrc" ]; then
+    install -d /usr/local/share/fonts/ptai
+    install -m 0644 "$fsrc"/*.ttf /usr/local/share/fonts/ptai/ 2>/dev/null || true
+    fc-cache -f /usr/local/share/fonts/ptai >/dev/null 2>&1 || true
+    step "greeter fonts installed system-wide"
+  else
+    err "no PTAI fonts found to share with the greeter"
+  fi
+
+  # greeter stylesheet + scanline tile, consumed by the gresource patcher
+  render "$SRC/gdm.css.in" /usr/share/ptai-theme/gdm.css
+  render "$SRC/gdm-vignette.svg.in" /usr/share/ptai-theme/gdm-vignette.svg
+  install -m 0644 "$SRC/scanline.svg" /usr/share/ptai-theme/scanline.svg
+
+  install -d /etc/dconf/db/gdm.d /etc/dconf/profile
+  cat > /etc/dconf/profile/gdm <<'EOF'
+user-db:user
+system-db:gdm
+file-db:/usr/share/gdm/greeter-dconf-defaults
+EOF
+  cat > /etc/dconf/db/gdm.d/95-ptai <<EOF
+[org/gnome/desktop/interface]
+color-scheme='$([ "$LIGHT" -eq 1 ] && echo default || echo prefer-dark)'
+accent-color='${ACCENT:-blue}'
+font-name='Share Tech Mono 11'
+document-font-name='Share Tech Mono 11'
+monospace-font-name='VT323 14'
+gtk-theme='$([ "$LIGHT" -eq 1 ] && echo Adwaita || echo Adwaita-dark)'
+font-antialiasing='grayscale'
+cursor-blink=true
+
+[org/gnome/desktop/background]
+picture-uri='file://$wp'
+picture-uri-dark='file://$wp'
+picture-options='zoom'
+primary-color='$BG'
+
+[org/gnome/login-screen]
+logo=''
+disable-user-list=false
+banner-message-enable=true
+banner-message-text='$ORG // PTAI\n[ACCESSING PTAI SYSTEM...] CHANNEL $(printf '%s' "$NAME" | tr '[:lower:]' '[:upper:]') · LINK NOMINAL\n>WYC REMINDER: SAFETY SECOND! PROFIT FIRST!'
+EOF
+  dconf update
+  step "GDM dconf profile written"
+
+  install_gdm_patch
+}
+
+# Patch the shell theme gresource so the greeter itself is themed, and register
+# a dnf hook so a gnome-shell update re-applies it instead of reverting.
+install_gdm_patch() {
+  # Preflight: without these the patcher can only fail, and its failure looks
+  # like "no stylesheets found" because it cannot read the bundles at all.
+  local missing=""
+  command -v gresource >/dev/null || missing="$missing gresource"
+  command -v glib-compile-resources >/dev/null || missing="$missing glib-compile-resources"
+  if [ -n "$missing" ]; then
+    err "greeter chrome needs:$missing"
+    d "  install them, then re-run this command:"
+    d "    sudo dnf install glib2 glib2-devel"
+    d "    sudo $SELF gdm $KEY"
+    d "  the wallpaper, fonts and banner are already applied."
+    return 0
+  fi
+
+  install -Dm 0755 "$SRC/ptai-gdm-patch" /usr/libexec/ptai-gdm-patch
+
+  if [ -d /etc/dnf/plugins ]; then
+    install -d /etc/dnf/plugins/post-transaction-actions.d
+    cat > /etc/dnf/plugins/post-transaction-actions.d/ptai-gdm.action <<'EOF'
+# re-theme the GDM greeter after any gnome-shell change
+gnome-shell:in:/usr/libexec/ptai-gdm-patch patch
+EOF
+    d "  dnf post-transaction hook installed"
+    need dnf && ! rpm -q python3-dnf-plugins-core >/dev/null 2>&1 \
+      && err "install the hook runner: sudo dnf install python3-dnf-plugins-core"
+  fi
+
+  if /usr/libexec/ptai-gdm-patch patch 2>&1; then
+    step "greeter theme compiled into the shell gresource"
+    d "  apply now with: sudo systemctl restart gdm   (ends your session)"
+  else
+    err "gresource patch failed — greeter keeps the stock theme"
+  fi
+}
+
+# Report the actual state of every link in the greeter chain, so a stock-looking
+# login screen can be traced to the step that failed rather than guessed at.
+doctor_gdm() {
+  local res data
+  data="/usr/share/ptai-theme"
+
+  c ">GDM DOCTOR"
+
+  printf '\n-- shell --\n'
+  printf 'gnome-shell   : %s\n' "$(gnome-shell --version 2>/dev/null || echo 'not found')"
+  printf 'session type  : %s\n' "${XDG_SESSION_TYPE:-?}"
+
+  printf '\n-- greeter assets --\n'
+  for f in gdm.css gdm-vignette.svg scanline.svg; do
+    printf '%-16s: %s\n' "$f" "$([ -f "$data/$f" ] && wc -c < "$data/$f" | tr -d ' ' | sed 's/$/ bytes/' || echo MISSING)"
+  done
+  printf 'unrendered tok: %s\n' \
+    "$(grep -ho '@[A-Z0-9]*@' "$data/gdm.css" 2>/dev/null | sort -u | tr '\n' ' ' || echo n/a)"
+  printf 'patcher       : %s\n' "$([ -x /usr/libexec/ptai-gdm-patch ] && echo installed || echo MISSING)"
+  printf 'fonts         : %s file(s) in /usr/local/share/fonts/ptai\n' \
+    "$(ls /usr/local/share/fonts/ptai/*.ttf 2>/dev/null | wc -l | tr -d ' ')"
+  printf 'fc sees them  : %s\n' "$(fc-list 2>/dev/null | grep -ci 'Share Tech Mono' || echo 0)"
+
+  printf '\n-- gresource --\n'
+  printf 'tools         : gresource=%s glib-compile-resources=%s\n' \
+    "$(command -v gresource >/dev/null && echo ok || echo 'MISSING (dnf install glib2)')" \
+    "$(command -v glib-compile-resources >/dev/null && echo ok || echo 'MISSING (dnf install glib2-devel)')"
+  printf 'bundles found :\n'
+  local found=0 f
+  for f in /usr/share/gnome-shell/*.gresource /usr/lib64/gnome-shell/*.gresource \
+           /usr/lib/gnome-shell/*.gresource /usr/share/gdm/*.gresource; do
+    [ -f "$f" ] || continue
+    found=1
+    printf '  %-58s %4s res %3s css\n' "$f" \
+      "$(gresource list "$f" 2>/dev/null | wc -l | tr -d ' ')" \
+      "$(gresource list "$f" 2>/dev/null | grep -c '\.css$' | tr -d ' ')"
+  done
+  [ "$found" = "1" ] || printf '  (none)\n'
+  if ! command -v gresource >/dev/null; then
+    printf '\n  ^ every count above reads 0 because gresource is not installed,\n'
+    printf '    not because the bundles are empty. Fix that first:\n'
+    printf '      sudo dnf install glib2 glib2-devel\n'
+  fi
+
+  # the one the patcher will target: first bundle that actually holds a stylesheet
+  res=""
+  for f in /usr/share/gnome-shell/gnome-shell-theme.gresource \
+           /usr/share/gnome-shell/*.gresource /usr/lib64/gnome-shell/*.gresource \
+           /usr/lib/gnome-shell/*.gresource /usr/share/gdm/*.gresource; do
+    [ -f "$f" ] || continue
+    gresource list "$f" 2>/dev/null | grep -q '\.css$' && { res="$f"; break; }
+  done
+
+  if [ -n "$res" ]; then
+    printf 'target        : %s\n' "$res"
+    printf 'stylesheets   : %s\n' \
+      "$(gresource list "$res" 2>/dev/null | grep '\.css$' | sed 's|.*/||' | tr '\n' ' ')"
+    printf 'ptai tiles    : %s\n' \
+      "$(gresource list "$res" 2>/dev/null | grep -c 'ptai-' | tr -d ' ')"
+    local hit=0 sheet
+    while read -r sheet; do
+      gresource extract "$res" "$sheet" 2>/dev/null | grep -q 'PTAI greeter overrides' && hit=$((hit + 1))
+    done < <(gresource list "$res" 2>/dev/null | grep '\.css$')
+    printf 'PATCHED SHEETS: %s   <-- 0 means the patch is not in place\n' "$hit"
+    printf 'stamp         : %s\n' \
+      "$([ -f "$data/$(basename "$res").stamp" ] && (sha256sum -c --status "$data/$(basename "$res").stamp" 2>/dev/null && echo 'matches file on disk' || echo 'STALE - re-run: sudo ptai-theme gdm') || echo missing)"
+  else
+    printf 'target        : NONE FOUND\n'
+    printf 'No bundle on this system contains a stylesheet, so there is nothing\n'
+    printf 'for the patcher to append to. This build keeps the greeter CSS\n'
+    printf 'compiled into the gnome-shell binary itself.\n'
+  fi
+
+  printf '\n-- gdm dconf --\n'
+  printf 'profile       : %s\n' "$([ -f /etc/dconf/profile/gdm ] && echo present || echo MISSING)"
+  printf 'keyfile       : %s\n' "$([ -f /etc/dconf/db/gdm.d/95-ptai ] && echo present || echo MISSING)"
+  printf 'compiled db   : %s\n' "$([ -f /etc/dconf/db/gdm ] && echo present || echo 'MISSING - run dconf update')"
+  if [ -f /etc/dconf/db/gdm.d/95-ptai ]; then
+    printf 'wallpaper     : %s\n' "$(grep -m1 picture-uri /etc/dconf/db/gdm.d/95-ptai | sed "s/.*file:\/\///;s/'//")"
+    local wp; wp="$(grep -m1 picture-uri /etc/dconf/db/gdm.d/95-ptai | sed "s/.*file:\/\///;s/'//")"
+    printf 'readable      : %s\n' "$([ -r "$wp" ] && echo yes || echo 'NO - greeter runs as gdm and cannot read it')"
+  fi
+
+  printf '\n-- hook --\n'
+  printf 'dnf action    : %s\n' "$([ -f /etc/dnf/plugins/post-transaction-actions.d/ptai-gdm.action ] && echo armed || echo absent)"
+  printf 'plugin pkg    : %s\n' "$(rpm -q python3-dnf-plugins-core 2>/dev/null || echo 'NOT INSTALLED - hook will not run')"
+
+  printf '\n'
+  d "  If PATCHED SHEETS is 0, run: sudo /usr/libexec/ptai-gdm-patch patch"
+  d "  and read its output — it names the step that failed."
+  d "  If it says installed but the greeter is stock, GDM was not restarted:"
+  d "  sudo systemctl restart gdm"
+}
+
+# Iterate on the greeter without reinstalling: /usr/share/ptai-theme/gdm.css is
+# the live source the patcher reads, so editing it and re-patching is the whole
+# loop. Colours are already substituted in that copy — write literals, not
+# @TOKENS@, or re-run `gdm` to regenerate it from the preset.
+edit_gdm_css() {
+  [ "$(id -u)" -eq 0 ] || { err "needs root — sudo $SELF gdm-edit"; exit 1; }
+  local f=/usr/share/ptai-theme/gdm.css
+  [ -f "$f" ] || { err "$f not found — run: sudo $SELF gdm $KEY"; exit 1; }
+  "${EDITOR:-${VISUAL:-nano}}" "$f"
+  reload_gdm_css
+}
+
+reload_gdm_css() {
+  [ "$(id -u)" -eq 0 ] || { err "needs root — sudo $SELF gdm-reload"; exit 1; }
+  [ -x /usr/libexec/ptai-gdm-patch ] || { err "patcher not installed — run: sudo $SELF gdm"; exit 1; }
+  if /usr/libexec/ptai-gdm-patch patch 2>&1; then
+    c ">GREETER RELOADED"
+    d "  see it: sudo systemctl restart gdm   (ends your session)"
+    d "  or without logging out: $SELF gdm-preview"
+  else
+    err "patch failed — greeter unchanged"
+  fi
+}
+
+# Preview the greeter in a nested session, so a CSS tweak can be checked without
+# restarting gdm and dropping everything you have open.
+preview_gdm() {
+  if need dbus-run-session && [ -x /usr/bin/gnome-shell ]; then
+    d "  launching a nested greeter — close its window to return"
+    dbus-run-session -- gnome-shell --nested --mode=gdm || \
+      err "nested greeter failed; use: sudo systemctl restart gdm"
+  else
+    err "needs dbus-run-session and gnome-shell"
+  fi
+}
+
+restore_gdm() {
+  [ "$(id -u)" -eq 0 ] || { err "needs root — sudo $SELF gdm-restore"; exit 1; }
+  [ -x /usr/libexec/ptai-gdm-patch ] && /usr/libexec/ptai-gdm-patch restore || true
+  rm -f /etc/dnf/plugins/post-transaction-actions.d/ptai-gdm.action
+  rm -f /etc/dconf/db/gdm.d/95-ptai
+  rm -rf /usr/local/share/fonts/ptai
+  fc-cache -f >/dev/null 2>&1 || true
+  dconf update 2>/dev/null || true
+  c ">GDM RESTORED"
+  d "  sudo systemctl restart gdm to see the stock greeter"
+}
+
+do_install() {
+  require_user_session
+  c ">PTAI INSTALL / PRESET: $NAME"
+  step "fonts";        install_fonts
+  step "shell theme";  install_shell_theme
+  step "gtk";          install_gtk
+  step "icons";        install_icons
+  purge_sounds
+  step "wallpaper";    install_wallpaper
+  step "terminal";     install_terminal
+  step "prompt";       install_prompt
+  step "fastfetch";    install_fastfetch
+  step "crt overlay";  install_extension
+  step "applying";     apply_settings
+  step "gdm";          install_gdm
+  echo
+  c ">INSTALL COMPLETE"
+  d "  log out and back in for fonts + shell theme to fully take effect"
+  d "  switch look:  ptai-theme set $(ls "$PRESETS"/*.conf | xargs -n1 basename | sed 's/\.conf$//' | tr '\n' '|' | sed 's/|$//')"
+}
+
+do_set() {
+  require_user_session
+  install_shell_theme
+  install_gtk
+  install_icons
+  install_wallpaper
+  install_terminal
+  install_prompt
+  install_fastfetch
+  install_extension
+  apply_settings
+  repaint_session
+  c ">PRESET SET: $NAME"
+  d "  open shells keep the old LS_COLORS: exec bash  (or a new terminal)"
+  d "  GTK apps need a restart of the app itself; the shell and icons are live"
+  [ -f /usr/share/ptai-theme/gdm.css ] && d "  login screen: sudo $SELF gdm $KEY"
+}
+
+do_crt() {
+  local sp="/org/gnome/shell/extensions/ptai-crt/"
+  need dconf || { err "dconf missing"; exit 1; }
+  case "${CRTMODE:-standard}" in
+    off) gnome-extensions disable ptai-crt@ptai.local 2>/dev/null || true
+         c ">CRT OVERLAY OFF"; return ;;
+    terminal|screen)
+         dconf write "${sp}target" "'$CRTMODE'"
+         need gnome-extensions && gnome-extensions enable ptai-crt@ptai.local 2>/dev/null || true
+         c ">CRT SCOPE: $CRTMODE"; return ;;
+    on|standard)
+         dconf write "${sp}scanline-opacity" 0.22
+         dconf write "${sp}scanline-pitch" 4
+         dconf write "${sp}vignette-opacity" 0.45
+         dconf write "${sp}tint-opacity" 0.05
+         dconf write "${sp}flicker-enabled" true
+         dconf write "${sp}flicker-depth" 0.05
+         dconf write "${sp}sweep-enabled" true
+         dconf write "${sp}sweep-opacity" 0.14
+         dconf write "${sp}sweep-duration" 7000 ;;
+    subtle)
+         dconf write "${sp}scanline-opacity" 0.10
+         dconf write "${sp}scanline-pitch" 5
+         dconf write "${sp}vignette-opacity" 0.26
+         dconf write "${sp}tint-opacity" 0.02
+         dconf write "${sp}flicker-enabled" false
+         dconf write "${sp}flicker-depth" 0.02
+         dconf write "${sp}sweep-enabled" true
+         dconf write "${sp}sweep-opacity" 0.09
+         dconf write "${sp}sweep-duration" 11000 ;;
+    heavy)
+         dconf write "${sp}scanline-opacity" 0.38
+         dconf write "${sp}scanline-pitch" 3
+         dconf write "${sp}vignette-opacity" 0.68
+         dconf write "${sp}tint-opacity" 0.09
+         dconf write "${sp}flicker-enabled" true
+         dconf write "${sp}flicker-depth" 0.11
+         dconf write "${sp}sweep-enabled" true
+         dconf write "${sp}sweep-opacity" 0.24
+         dconf write "${sp}sweep-duration" 4500 ;;
+  esac
+  dconf write "${sp}tint-color" "'$FG'"
+  need gnome-extensions && gnome-extensions enable ptai-crt@ptai.local 2>/dev/null || true
+  c ">CRT OVERLAY: ${CRTMODE:-standard}"
+}
+
+do_status() {
+  c ">PTAI STATUS"
+  printf '  active preset .. %s\n' "$(cat "$STATE" 2>/dev/null || echo none)"
+  printf '  themes ......... %s\n' "$(ls -d "$THEMES"/PTAI-* 2>/dev/null | xargs -r -n1 basename | tr '\n' ' ')"
+  printf '  fonts .......... %s\n' "$(fc-list 2>/dev/null | grep -ci 'Share Tech Mono\|VT323\|Silkscreen' || echo 0) faces"
+  printf '  user-theme ..... %s\n' "$(gsettings get org.gnome.shell.extensions.user-theme name 2>/dev/null || echo 'extension missing')"
+  printf '  gtk override ... %s\n' "$([ -f "$CFG/gtk-4.0/gtk.css" ] && echo present || echo no)"
+  printf '  icon theme ..... %s\n' "$(gsettings get org.gnome.desktop.interface icon-theme 2>/dev/null | tr -d "'" || echo unknown)"
+  printf '  crt overlay .... %s\n' "$(gnome-extensions info ptai-crt@ptai.local 2>/dev/null | grep -i '^ *State' | sed 's/.*: //' || echo 'not installed')"
+  printf '  greeter ........ %s\n' "$([ -f /usr/share/ptai-theme/gnome-shell-theme.gresource.stamp ] && echo 'themed' || echo 'stock (sudo ptai-theme gdm)')"
+  printf '  greeter hook ... %s\n' "$([ -f /etc/dnf/plugins/post-transaction-actions.d/ptai-gdm.action ] && echo 'armed' || echo 'no')"
+}
+
+do_uninstall() {
+  c ">PTAI UNINSTALL"
+  need gnome-extensions && gnome-extensions disable ptai-crt@ptai.local 2>/dev/null || true
+  rm -rf "$HOME/.local/share/gnome-shell/extensions/ptai-crt@ptai.local"
+  need dconf && dconf reset -f /org/gnome/shell/extensions/ptai-crt/ 2>/dev/null || true
+  rm -rf "$THEMES"/PTAI-* "$SHARE"
+  rm -f "$HOME/.local/share/org.gnome.Ptyxis/palettes"/ptai-*.palette
+  grep -q '# PTAI' "$HOME/.bashrc" 2>/dev/null && sed -i '/# PTAI/d' "$HOME/.bashrc" || true
+  for f in "$CFG/gtk-4.0/gtk.css" "$CFG/gtk-3.0/gtk.css"; do
+    [ -f "$f" ] && grep -q 'PTAI' "$f" && rm -f "$f"
+  done
+  rm -rf "$HOME/.local/share/icons"/PTAI-*
+  rm -rf "$HOME/.local/share/sounds"/PTAI-*
+  rm -rf "$SHARE/sounds" "$SHARE/ptai-sound" "$SHARE/sound.conf" "$SHARE/hum.pid"
+  pkill -f ptai-hum-loop 2>/dev/null || true
+  gsettings reset org.gnome.desktop.sound theme-name 2>/dev/null || true
+  gsettings reset org.gnome.desktop.interface icon-theme 2>/dev/null || true
+  [ -f "$CFG/fastfetch/config.jsonc" ] && grep -q 'PTAI' "$CFG/fastfetch/config.jsonc" && rm -f "$CFG/fastfetch/config.jsonc"
+  gsettings reset org.gnome.desktop.interface font-name 2>/dev/null || true
+  gsettings reset org.gnome.desktop.interface monospace-font-name 2>/dev/null || true
+  gsettings reset org.gnome.desktop.interface document-font-name 2>/dev/null || true
+  gsettings reset org.gnome.desktop.wm.preferences titlebar-font 2>/dev/null || true
+  gsettings reset org.gnome.desktop.background picture-uri 2>/dev/null || true
+  gsettings reset org.gnome.desktop.background picture-uri-dark 2>/dev/null || true
+  gsettings reset org.gnome.shell.extensions.user-theme name 2>/dev/null || true
+  if [ "$(id -u)" -eq 0 ]; then
+    restore_gdm
+  else
+    d "  login screen left themed — run: sudo $SELF gdm-restore"
+  fi
+  d "  fonts left in $FONTDIR — delete manually if unwanted"
+  c ">DONE"
+}
+
+# ---- args ----
+while [ $# -gt 0 ]; do
+  case "$1" in
+    install|reload|doctor|set|list|status|uninstall|gdm|gdm-restore|gdm-doctor|gdm-edit|gdm-reload|gdm-preview|crt) CMD="$1"; shift ;;
+    on|off|subtle|standard|heavy|terminal|screen) CRTMODE="$1"; shift ;;
+    --gtk) WITH_GTK=1; shift ;;
+    --no-gtk) WITH_GTK=0; shift ;;
+    --no-icons) WITH_ICONS=0; shift ;;
+    --no-fonts) WITH_FONTS=0; shift ;;
+    --org) ORG="${2:-$ORG}"; shift 2 ;;
+    -h|--help|help) usage; exit 0 ;;
+    *) if [ -f "$PRESETS/$1.conf" ]; then PRESET="$1"; shift
+       else err "unknown argument: $1"; usage; exit 1; fi ;;
+  esac
+done
+
+[ -n "$CMD" ] || { usage; exit 0; }
+
+if [ "$CMD" = "list" ]; then
+  for f in "$PRESETS"/*.conf; do
+    (source "$f"; printf '  %-10s %-14s %s%s\n' "$KEY" "$NAME" "$FG" "$([ "${LIGHT:-0}" -eq 1 ] && echo '  (light)')")
+  done
+  exit 0
+fi
+
+if [ -z "$PRESET" ]; then
+  PRESET="$(cat "$STATE" 2>/dev/null || echo green)"
+fi
+load_preset "$PRESET"
+
+case "$CMD" in
+  install)   do_install ;;
+  reload)    do_reload ;;
+  doctor)    do_doctor ;;
+  set)       do_set ;;
+  status)    do_status ;;
+  crt)       do_crt ;;
+  gdm)         install_gdm ;;
+  gdm-doctor)  doctor_gdm ;;
+  gdm-edit)    edit_gdm_css ;;
+  gdm-reload)  reload_gdm_css ;;
+  gdm-preview) preview_gdm ;;
+  gdm-restore) restore_gdm ;;
+  uninstall) do_uninstall ;;
+esac

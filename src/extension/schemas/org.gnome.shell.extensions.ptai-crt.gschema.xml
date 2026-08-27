@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.ptai-crt" path="/org/gnome/shell/extensions/ptai-crt/">
+    <key name="scanline-opacity" type="d">
+      <default>0.22</default>
+      <range min="0.0" max="0.8"/>
+      <summary>Scanline darkness</summary>
+    </key>
+    <key name="scanline-pitch" type="i">
+      <default>4</default>
+      <range min="2" max="12"/>
+      <summary>Scanline pitch in pixels</summary>
+    </key>
+    <key name="vignette-opacity" type="d">
+      <default>0.45</default>
+      <range min="0.0" max="1.0"/>
+      <summary>Vignette / curvature falloff</summary>
+    </key>
+    <key name="tint-opacity" type="d">
+      <default>0.05</default>
+      <range min="0.0" max="0.3"/>
+      <summary>Phosphor wash strength</summary>
+    </key>
+    <key name="tint-color" type="s">
+      <default>'#3ff2a8'</default>
+      <summary>Phosphor wash colour</summary>
+    </key>
+    <key name="flicker-enabled" type="b">
+      <default>true</default>
+      <summary>Flicker</summary>
+    </key>
+    <key name="flicker-depth" type="d">
+      <default>0.05</default>
+      <range min="0.0" max="0.3"/>
+      <summary>Flicker depth</summary>
+    </key>
+    <key name="target" type="s">
+      <default>'terminal'</default>
+      <summary>Where the overlay is drawn: terminal windows only, or the whole screen</summary>
+    </key>
+    <key name="terminal-classes" type="as">
+      <default>['ptyxis','org.gnome.console','kgx','gnome-terminal','org.gnome.terminal','alacritty','kitty','wezterm','foot','tilix','xterm','blackbox','contour','rio']</default>
+      <summary>Window class substrings treated as terminals</summary>
+    </key>
+    <key name="sweep-enabled" type="b">
+      <default>true</default>
+      <summary>Beam sweep: a soft band of light travelling down the window</summary>
+    </key>
+    <key name="sweep-opacity" type="d">
+      <default>0.14</default>
+      <range min="0.0" max="0.6"/>
+      <summary>Sweep brightness</summary>
+    </key>
+    <key name="sweep-height" type="i">
+      <default>120</default>
+      <range min="20" max="600"/>
+      <summary>Sweep band height in pixels</summary>
+    </key>
+    <key name="sweep-duration" type="i">
+      <default>7000</default>
+      <range min="1000" max="30000"/>
+      <summary>Milliseconds for one pass down the window</summary>
+    </key>
+    <key name="only-on-desktop" type="b">
+      <default>false</default>
+      <summary>Deprecated, unused</summary>
+    </key>
+    <key name="panel-wordmark" type="b">
+      <default>true</default>
+      <summary>Corporate wordmark at the left of the top bar</summary>
+    </key>
+    <key name="panel-org" type="s">
+      <default>'HELIOS-YUTANI'</default>
+      <summary>Wordmark text</summary>
+    </key>
+    <key name="panel-subtitle" type="s">
+      <default>'PTAI'</default>
+      <summary>Second line / suffix beside the wordmark</summary>
+    </key>
+    <key name="panel-readout" type="b">
+      <default>true</default>
+      <summary>System readout at the right of the top bar</summary>
+    </key>
+    <key name="panel-readout-fields" type="as">
+      <default>['cpu','mem','net','temp','up']</default>
+      <summary>Readout fields, in order: cpu, mem, temp, load, net, up, node</summary>
+    </key>
+    <key name="panel-stats" type="b">
+      <default>true</default>
+      <summary>Readout as interactive gauges (sparkline + click-through detail) rather than plain text</summary>
+    </key>
+    <key name="panel-clock" type="s">
+      <choices>
+        <choice value="left"/>
+        <choice value="center"/>
+        <choice value="right"/>
+      </choices>
+      <default>'left'</default>
+      <summary>Which panel box holds the clock; left matches the PTAI layout</summary>
+    </key>
+    <key name="panel-height" type="i">
+      <default>52</default>
+      <range min="0" max="96"/>
+      <summary>Top bar height in pixels; 0 leaves the shell theme's own height</summary>
+    </key>
+    <key name="panel-hazard" type="b">
+      <default>true</default>
+      <summary>Hazard stripe along the bottom edge of the top bar</summary>
+    </key>
+  </schema>
+</schemalist>

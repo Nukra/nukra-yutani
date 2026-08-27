@@ -1,0 +1,9 @@
+{
+  "uuid": "ptai-crt@ptai.local",
+  "name": "PTAI CRT",
+  "description": "Composites scanlines, vignette and phosphor flicker over the whole session. Part of the PTAI system theme.",
+  "shell-version": ["45", "46", "47", "48", "49", "50"],
+  "settings-schema": "org.gnome.shell.extensions.ptai-crt",
+  "gettext-domain": "ptai-crt",
+  "version": 1
+}

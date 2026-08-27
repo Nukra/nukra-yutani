@@ -21,6 +21,40 @@ Every preset is drawn out in the gallery: **[nukra.github.io/nukra-yutani/](http
 ![The PTAI desktop, ice preset](screenshots/desktop-ice.png)
 *The `ice` preset: wallpaper wordmark, panel gauges, hazard stripe.*
 
+## The presets
+
+Every preset re-renders the whole system from four colours, so the difference is not a wallpaper swap — the panel gauges, icon set, terminal ramp and greeter all move with it.
+
+### Desktop
+
+| | | |
+|:--|:--|:--|
+| ![green](screenshots/desktop-green.png) `green` | ![amber](screenshots/desktop-amber.png) `amber` | ![ice](screenshots/desktop-ice.png) `ice` |
+| ![nostromo](screenshots/desktop-nostromo.png) `nostromo` | ![oxide](screenshots/desktop-oxide.png) `oxide` | ![magnetic](screenshots/desktop-magnetic.png) `magnetic` |
+| ![lithium](screenshots/desktop-lithium.png) `lithium` | ![p1](screenshots/desktop-p1.png) `p1` | ![paper](screenshots/desktop-paper.png) `paper` |
+
+`paper` is the only `LIGHT=1` preset: scanlines, vignette and flicker pull back so the effects read as print texture rather than a dark CRT.
+
+### Terminal
+
+The login banner types itself out on every new shell, and the prompt, `LS_COLORS` ramp and Ptyxis palette all come from the same four preset colours.
+
+![The boot banner typing out on the green preset](screenshots/term-green.gif)
+
+<details>
+<summary><b>The same banner in the other presets</b> — amber, ice, nostromo, oxide, magnetic, lithium, p1, paper</summary>
+
+![amber](screenshots/term-amber.gif)
+![ice](screenshots/term-ice.gif)
+![nostromo](screenshots/term-nostromo.gif)
+![oxide](screenshots/term-oxide.gif)
+![magnetic](screenshots/term-magnetic.gif)
+![lithium](screenshots/term-lithium.gif)
+![p1](screenshots/term-p1.gif)
+![paper](screenshots/term-paper.gif)
+
+</details>
+
 ## Install
 
 ```bash

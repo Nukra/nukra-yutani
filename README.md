@@ -1,4 +1,5 @@
-# PTAI — terminal system theme
+# PTAI — Vibe Coded terminal system theme Inspired by Weyland Yutani Alien theme.
+
 
 Personal-Terminal-Access-Interface. A phosphor-CRT system theme for **Fedora 44 Workstation / GNOME on Wayland**, in nine presets.
 
